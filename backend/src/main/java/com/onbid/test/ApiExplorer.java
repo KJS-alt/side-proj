@@ -23,11 +23,11 @@ public class ApiExplorer {
         // 실제 API 키 사용
         urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + "=" + apiKey);
         
-        urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*페이지당 데이터 개수*/
-        urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지 번호*/
-        urlBuilder.append("&" + URLEncoder.encode("DPSL_MTD_CD","UTF-8") + "=" + URLEncoder.encode("0001", "UTF-8")); /*0001 매각 0002 임대*/
-        urlBuilder.append("&" + URLEncoder.encode("CTGR_HIRK_ID","UTF-8") + "=" + URLEncoder.encode("10000", "UTF-8")); /*코드조회 오퍼레이션 참조*/
-        urlBuilder.append("&" + URLEncoder.encode("CTGR_HIRK_ID_MID","UTF-8") + "=" + URLEncoder.encode("10100", "UTF-8")); /*코드조회 오퍼레이션 참조*/
+//        urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*페이지당 데이터 개수*/
+//        urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지 번호*/
+//        urlBuilder.append("&" + URLEncoder.encode("DPSL_MTD_CD","UTF-8") + "=" + URLEncoder.encode("0001", "UTF-8")); /*0001 매각 0002 임대*/
+//        urlBuilder.append("&" + URLEncoder.encode("CTGR_HIRK_ID","UTF-8") + "=" + URLEncoder.encode("10000", "UTF-8")); /*코드조회 오퍼레이션 참조*/
+//        urlBuilder.append("&" + URLEncoder.encode("CTGR_HIRK_ID_MID","UTF-8") + "=" + URLEncoder.encode("10100", "UTF-8")); /*코드조회 오퍼레이션 참조*/
         urlBuilder.append("&" + URLEncoder.encode("SIDO","UTF-8") + "=" + URLEncoder.encode("서울특별시", "UTF-8")); /*물건소재지(시도)*/
 //        urlBuilder.append("&" + URLEncoder.encode("SGK","UTF-8") + "=" + URLEncoder.encode("인제군", "UTF-8")); /*물건소재지(시군구)*/
 //        urlBuilder.append("&" + URLEncoder.encode("EMD","UTF-8") + "=" + URLEncoder.encode("남면", "UTF-8")); /*물건소재지(읍면동)*/
