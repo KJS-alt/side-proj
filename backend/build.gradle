@@ -30,11 +30,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 
+    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
     // MyBatis
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
-
-    // Thymeleaf
-    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
     // MariaDB
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
@@ -47,11 +47,20 @@ dependencies {
     implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
     implementation 'org.glassfish.jaxb:jaxb-runtime:4.0.2'
 
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    // Swagger (SpringDoc OpenAPI) - Spring Boot 3.5.x 호환 버전
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+
     // DevTools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-security'
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.5'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
