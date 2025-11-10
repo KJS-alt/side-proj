@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -26,11 +27,13 @@ public class OnbidApiService {
     }
 
     /**
-     * 물건 목록 조회 - SIDO만으로 검색 (카테고리 제한 없음)
+     * 물건 목록 조회
+     * 카테고리를 지정하면 해당 카테고리의 물건만 조회
      */
     public String getGoodsList(
             int pageNo,
             int numOfRows,
+            String ctgrHirkId,  // 카테고리 추가
             String sido,
             String sgk,
             String emd,
@@ -51,12 +54,16 @@ public class OnbidApiService {
             urlBuilder.append("&numOfRows=").append(numOfRows);
             urlBuilder.append("&pageNo=").append(pageNo);
 
-            // 매각만 (임대 제외)
+            // 매각만 (임대 제외) - 필수
             urlBuilder.append("&DPSL_MTD_CD=0001");
 
-            // OnBid API는 카테고리 없이는 SIDO 검색이 안 되므로, SIDO가 있으면 토지 대분류(10000)를 기본값으로 추가
-            if (isNotEmpty(sido)) {
-                urlBuilder.append("&CTGR_HIRK_ID=10000");  // 토지 대분류
+            // 카테고리 설정 (선택사항)
+            // 카테고리를 지정하지 않으면 모든 카테고리 검색
+            if (isNotEmpty(ctgrHirkId)) {
+                urlBuilder.append("&CTGR_HIRK_ID=").append(ctgrHirkId);
+                log.info("카테고리 지정: {}", ctgrHirkId);
+            } else {
+                log.info("카테고리 미지정 - 전체 카테고리 검색");
             }
 
             // 선택적 파라미터들
@@ -101,8 +108,11 @@ public class OnbidApiService {
                     pageNo, numOfRows, sido != null ? sido : "전체");
             log.info("전체 URL: {}", url);
 
+            // URI 객체로 변환하여 중복 인코딩 방지
+            URI uri = URI.create(url);
+            
             long startTime = System.currentTimeMillis();
-            String response = restTemplate.getForObject(url, String.class);
+            String response = restTemplate.getForObject(uri, String.class);
             long endTime = System.currentTimeMillis();
 
             int responseLength = response != null ? response.length() : 0;
@@ -135,8 +145,8 @@ public class OnbidApiService {
     /**
      * 간단한 물건 목록 조회
      */
-    public String getGoodsList(int pageNo, int numOfRows, String sido) {
-        return getGoodsList(pageNo, numOfRows, sido, null, null, null, null, null, null, null, null, null, null);
+    public String getGoodsList(int pageNo, int numOfRows, String ctgrHirkId, String sido) {
+        return getGoodsList(pageNo, numOfRows, ctgrHirkId, sido, null, null, null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -144,7 +154,7 @@ public class OnbidApiService {
      */
     public String testConnection() {
         log.info("OnBid API 연결 테스트");
-        return getGoodsList(1, 5, null);
+        return getGoodsList(1, 5, null, null);
     }
 
     /**
