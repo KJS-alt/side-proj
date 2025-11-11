@@ -37,10 +37,10 @@ public class OnbidApiService {
     public OnbidApiService() {
         // RestTemplate에 타임아웃 설정 추가 (15초)
         this.restTemplate = new RestTemplate();
-        this.restTemplate.setRequestFactory(new org.springframework.http.client.SimpleClientHttpRequestFactory() {{
-            setConnectTimeout(15000);  // 연결 타임아웃: 15초
-            setReadTimeout(30000);      // 읽기 타임아웃: 30초
-        }});
+//        this.restTemplate.setRequestFactory(new org.springframework.http.client.SimpleClientHttpRequestFactory() {{
+//            setConnectTimeout(1500000);  // 연결 타임아웃: 15초
+//            setReadTimeout(3000000);      // 읽기 타임아웃: 30초
+//        }});
         
         try {
             // GoodsResponse를 위한 JAXB Context 생성
