@@ -23,7 +23,7 @@ function ListPage() {
   // 보기 모드 상태
   const [viewMode, setViewMode] = useState('db'); // 'db' | 'api' | 'filtered'
   const [apiData, setApiData] = useState([]); // API에서 조회한 원본 데이터
-  const [filteredData, setFilteredData] = useState([]); // 이력별 필터링한 데이터
+  const [filteredData, setFilteredData] = useState([]); // 100개 필터링한 데이터
 
   // 필터 상태 (DB 저장 필드에 맞게)
   const [filters, setFilters] = useState({
@@ -57,7 +57,7 @@ function ListPage() {
     });
   };
 
-  // 이력별 필터링하여 100개만 선택
+  // api 필터링하여 100개만 선택
   const selectTop100 = (goodsList) => {
     const filtered = filterLatestByHistory(goodsList);
     // 최대 100개로 제한
@@ -90,7 +90,7 @@ function ListPage() {
     }
   };
 
-  // 이력별 조회 (100개)
+  // 100개 조회
   const handleFilterByHistory = () => {
     if (apiData.length === 0) {
       alert('먼저 API 조회를 실행해주세요.');
@@ -107,8 +107,8 @@ function ListPage() {
       setTotalCount(filtered.length);
       setPageNo(1);
     } catch (err) {
-      console.error('이력별 필터링 오류:', err);
-      setError('이력별 필터링 중 오류가 발생했습니다.');
+      console.error('100개 필터링 오류:', err);
+      setError('100개 필터링 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +117,7 @@ function ListPage() {
   // 데이터베이스에 저장
   const handleSaveToDB = async () => {
     if (filteredData.length === 0) {
-      alert('먼저 이력별 조회(100개)를 실행해주세요.');
+      alert('먼저 100개 조회를 실행해주세요.');
       return;
     }
 
@@ -361,7 +361,7 @@ function ListPage() {
             disabled={isLoading || apiData.length === 0}
             className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            이력별 조회(100개)
+            100개 조회
           </button>
           <button
             onClick={handleSaveToDB}
@@ -385,7 +385,7 @@ function ListPage() {
             모든 데이터 삭제
           </button>
           <div className="px-4 py-2 bg-gray-100 text-gray-700 rounded text-sm flex items-center justify-center">
-            모드: {viewMode === 'db' ? 'DB' : viewMode === 'api' ? 'API' : '이력별'}
+            모드: {viewMode === 'db' ? 'DB' : viewMode === 'api' ? 'API' : '100개'}
           </div>
         </div>
       </div>
