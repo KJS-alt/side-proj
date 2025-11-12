@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { addFavorite, deleteFavoriteByGoodsNo, isAuthenticated } from '../utils/api';
+
+// 기능 토글 설정 (숨김처리 제어)
+const FEATURES = {
+  FAVORITES: false  // 관심물건 기능
+};
 
 /**
  * 숫자를 천단위 구분 형식으로 변환
@@ -46,8 +52,8 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
   const isLoggedIn = isAuthenticated();
 
   // 행 클릭 핸들러 (상세 정보 토글)
-  const handleRowClick = (goodsNo) => {
-    setExpandedRow(expandedRow === goodsNo ? null : goodsNo);
+  const handleRowClick = (itemId) => {
+    setExpandedRow(expandedRow === itemId ? null : itemId);
   };
 
   // 관심물건 등록/삭제
@@ -59,15 +65,15 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
       return;
     }
 
-    setLoadingFavorite(prev => ({ ...prev, [item.goodsNo]: true }));
+    setLoadingFavorite(prev => ({ ...prev, [item.historyNo]: true }));
     
     try {
       await addFavorite({
         historyNo: item.historyNo,
-        goodsNo: item.goodsNo,
+        goodsNo: item.historyNo,  // DB에는 goodsNo가 없으므로 historyNo 사용
         goodsName: item.goodsName,
         minBidPrice: item.minBidPrice,
-        bidCloseDate: item.bidCloseDate,
+        bidCloseDate: item.bidCloseDate || '',
       });
       
       alert('관심물건에 등록되었습니다.');
@@ -80,7 +86,7 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
         alert('처리 중 오류가 발생했습니다.');
       }
     } finally {
-      setLoadingFavorite(prev => ({ ...prev, [item.goodsNo]: false }));
+      setLoadingFavorite(prev => ({ ...prev, [item.historyNo]: false }));
     }
   };
 
@@ -99,9 +105,6 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
               물건이력번호
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
-              물건관리번호
-            </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
               물건명
             </th>
             <th 
@@ -117,21 +120,12 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
               감정가 {getSortIcon('appraisalPrice')}
             </th>
             <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">
-              비율
+              입찰마감일
             </th>
-            <th 
-              className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b cursor-pointer hover:bg-gray-200"
-              onClick={() => onSort('bidCloseDate')}
-            >
-              입찰마감 {getSortIcon('bidCloseDate')}
+            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
+              소재지
             </th>
-            <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">
-              상태
-            </th>
-            <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">
-              지역
-            </th>
-            {isLoggedIn && (
+            {FEATURES.FAVORITES && isLoggedIn && (
               <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">
                 관심
               </th>
@@ -143,14 +137,11 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
             <React.Fragment key={item.historyNo || `goods-${index}`}>
               {/* 메인 행 */}
               <tr
-                onClick={() => handleRowClick(item.goodsNo)}
+                onClick={() => handleRowClick(item.historyNo)}
                 className="hover:bg-gray-50 cursor-pointer border-b"
               >
                 <td className="px-4 py-3 text-sm text-gray-600">
                   {item.historyNo || '-'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
-                  {item.goodsNo || '-'}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-800">
                   <div className="max-w-md truncate" title={item.goodsName}>
@@ -164,88 +155,65 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
                   {item.appraisalPrice ? `${formatNumber(item.appraisalPrice)}원` : '-'}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                  {item.feeRate || '-'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 text-center">
                   {formatDate(item.bidCloseDate)}
                 </td>
-                <td className="px-4 py-3 text-center">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                    {item.statusName || '-'}
-                  </span>
+                <td className="px-4 py-3 text-sm text-gray-600">
+                  <div className="max-w-md truncate" title={item.address}>
+                    {item.address || '-'}
+                  </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600 text-center">
-                  {extractRegion(item.roadAddress || item.address)}
-                </td>
-                {isLoggedIn && (
+                {FEATURES.FAVORITES && isLoggedIn && (
                   <td className="px-4 py-3 text-center">
                     <button
                       onClick={(e) => handleFavoriteToggle(e, item)}
-                      disabled={loadingFavorite[item.goodsNo]}
+                      disabled={loadingFavorite[item.historyNo]}
                       className={`text-xs px-3 py-1 rounded transition ${
-                        loadingFavorite[item.goodsNo]
+                        loadingFavorite[item.historyNo]
                           ? 'bg-gray-300 cursor-not-allowed'
                           : 'bg-yellow-500 hover:bg-yellow-600 text-white'
                       }`}
                     >
-                      {loadingFavorite[item.goodsNo] ? '...' : '★'}
+                      {loadingFavorite[item.historyNo] ? '...' : '★'}
                     </button>
                   </td>
                 )}
               </tr>
 
               {/* 확장 행 (상세 정보) */}
-              {expandedRow === item.goodsNo && (
+              {expandedRow === item.historyNo && (
                 <tr className="bg-gray-50">
-                  <td colSpan={isLoggedIn ? 9 : 8} className="px-4 py-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      {/* 좌측 */}
+                  <td colSpan={(FEATURES.FAVORITES && isLoggedIn) ? 7 : 6} className="px-4 py-4">
+                    <div className="text-sm mb-4">
                       <div className="space-y-2">
                         <div>
-                          <span className="font-semibold text-gray-700">물건이력번호:</span>
-                          <p className="text-gray-600 mt-1">{item.historyNo || '-'}</p>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-gray-700">물건 상세:</span>
-                          <p className="text-gray-600 mt-1">{item.goodsDetail || '-'}</p>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-gray-700">지번 주소:</span>
+                          <span className="font-semibold text-gray-700">물건소재지:</span>
                           <p className="text-gray-600 mt-1">{item.address || '-'}</p>
                         </div>
-                        <div>
-                          <span className="font-semibold text-gray-700">도로명 주소:</span>
-                          <p className="text-gray-600 mt-1">{item.roadAddress || '-'}</p>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-gray-700">카테고리:</span>
-                          <p className="text-gray-600 mt-1">{item.categoryName || '-'}</p>
-                        </div>
-                      </div>
-
-                      {/* 우측 */}
-                      <div className="space-y-2">
-                        <div>
-                          <span className="font-semibold text-gray-700">입찰 시작:</span>
-                          <p className="text-gray-600 mt-1">{formatDate(item.bidStartDate)}</p>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-gray-700">입찰 방식:</span>
-                          <p className="text-gray-600 mt-1">{item.bidMethodName || '-'}</p>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-gray-700">처분 방식:</span>
-                          <p className="text-gray-600 mt-1">{item.saleTypeName || '-'}</p>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-gray-700">조회수/관심:</span>
-                          <p className="text-gray-600 mt-1">
-                            조회 {formatNumber(item.inquiryCount || 0)} / 
-                            관심 {formatNumber(item.favoriteCount || 0)}
-                          </p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <span className="font-semibold text-gray-700">최저입찰가:</span>
+                            <p className="text-red-600 font-bold mt-1">{formatNumber(item.minBidPrice)}원</p>
+                          </div>
+                          <div>
+                            <span className="font-semibold text-gray-700">감정가:</span>
+                            <p className="text-gray-600 mt-1">{formatNumber(item.appraisalPrice)}원</p>
+                          </div>
                         </div>
                       </div>
                     </div>
+                    
+                    {/* 구매하기 버튼 */}
+                    {item.historyNo && (
+                      <div className="text-center pt-4 border-t">
+                        <Link
+                          to={`/goods/${item.historyNo}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-block bg-blue-600 text-white px-8 py-2 rounded-lg hover:bg-blue-700 transition font-semibold"
+                        >
+                          상세보기 / 구매하기
+                        </Link>
+                      </div>
+                    )}
                   </td>
                 </tr>
               )}

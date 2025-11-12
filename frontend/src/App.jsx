@@ -3,6 +3,8 @@ import Header from './components/Header';
 import PrivateRoute from './components/PrivateRoute';
 import HomePage from './pages/HomePage';
 import ListPage from './pages/ListPage';
+import GoodsDetailPage from './pages/GoodsDetailPage';
+import PurchasesPage from './pages/PurchasesPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import FavoritesPage from './pages/FavoritesPage';
@@ -26,6 +28,12 @@ function App() {
             
             {/* 물건 목록 페이지 */}
             <Route path="/goods" element={<ListPage />} />
+            
+            {/* 물건 상세 페이지 */}
+            <Route path="/goods/:historyNo" element={<GoodsDetailPage />} />
+            
+            {/* 구매 목록 페이지 */}
+            <Route path="/purchases" element={<PurchasesPage />} />
             
             {/* 로그인 페이지 */}
             <Route path="/login" element={<LoginPage />} />

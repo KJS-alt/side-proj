@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import GoodsTable from '../components/GoodsTable';
 import GoodsMobileCard from '../components/GoodsMobileCard';
-import { getGoodsList } from '../utils/api';
+import { getGoodsList, getGoodsFromDB, saveGoodsToDB, deleteAllGoods } from '../utils/api';
 
 /**
  * ListPage 컴포넌트 - 물건 목록 페이지 (표 형식)
@@ -20,104 +20,249 @@ function ListPage() {
 
   const numOfRows = 20; // 페이지당 건수
 
-  // 필터 상태
+  // 보기 모드 상태
+  const [viewMode, setViewMode] = useState('db'); // 'db' | 'api' | 'filtered'
+  const [apiData, setApiData] = useState([]); // API에서 조회한 원본 데이터
+  const [filteredData, setFilteredData] = useState([]); // 이력별 필터링한 데이터
+
+  // 필터 상태 (DB 저장 필드에 맞게)
   const [filters, setFilters] = useState({
-    // 기본 검색
-    cltrNm: '',           // 물건명
-    cltrMnmtNo: '',       // 물건관리번호
-    
-    // 가격
-    goodsPriceFrom: '',   // 감정가 시작
-    goodsPriceTo: '',     // 감정가 끝
-    openPriceFrom: '',    // 최저입찰가 시작
-    openPriceTo: '',      // 최저입찰가 끝
-    
-    // 입찰일자
-    pbctBegnDtm: '',      // 입찰시작일 (YYYYMMDD)
-    pbctClsDtm: '',       // 입찰종료일 (YYYYMMDD)
-    
-    // 카테고리
-    ctgrHirkId: '',       // 카테고리 ID
+    goodsName: '',        // 물건명
+    minBidPriceFrom: '',  // 최저입찰가 시작
+    minBidPriceTo: '',    // 최저입찰가 끝
+    appraisalPriceFrom: '', // 감정가 시작
+    appraisalPriceTo: '',   // 감정가 끝
   });
 
-  // 물건 목록 조회
-  const fetchGoods = async (signal) => {
+  // goodsNo를 기준으로 그룹화
+  const groupByGoodsNo = (goodsList) => {
+    const grouped = {};
+    goodsList.forEach(item => {
+      const key = item.goodsNo || item.historyNo;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(item);
+    });
+    return grouped;
+  };
+
+  // 각 그룹에서 historyNo가 가장 큰 (최신) 항목 선택
+  const filterLatestByHistory = (goodsList) => {
+    const grouped = groupByGoodsNo(goodsList);
+    return Object.values(grouped).map(group => {
+      return group.reduce((latest, current) => {
+        return (current.historyNo > latest.historyNo) ? current : latest;
+      });
+    });
+  };
+
+  // 이력별 필터링하여 100개만 선택
+  const selectTop100 = (goodsList) => {
+    const filtered = filterLatestByHistory(goodsList);
+    // 최대 100개로 제한
+    return filtered.slice(0, 100);
+  };
+
+  // API 조회 버튼
+  const handleApiQuery = async () => {
     setIsLoading(true);
     setError('');
     
     try {
-      // 빈 문자열 필터 제거
-      const cleanFilters = Object.entries(filters).reduce((acc, [key, value]) => {
-        if (value !== '') {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await getGoodsList(pageNo, numOfRows, cleanFilters, signal);
+      // 모든 데이터 조회 (numOfRows를 크게 설정)
+      const response = await getGoodsList(1, 9999, {});
       
       if (response.success && response.data?.items) {
-        let items = response.data.items;
-        
-        // 클라이언트 사이드 정렬 (필요한 경우)
-        if (sortField) {
-          items = [...items].sort((a, b) => {
-            let aVal = a[sortField];
-            let bVal = b[sortField];
-            
-            // 숫자 비교
-            if (typeof aVal === 'number' && typeof bVal === 'number') {
-              return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
-            }
-            
-            // 문자열 비교
-            if (typeof aVal === 'string' && typeof bVal === 'string') {
-              return sortOrder === 'asc' 
-                ? aVal.localeCompare(bVal) 
-                : bVal.localeCompare(aVal);
-            }
-            
-            return 0;
-          });
-        }
-        
-        setGoods(items);
-        
-        // totalCount는 response.data에 있음 (백엔드 Body 구조)
-        const count = response.data?.totalCount || items.length;
-        setTotalCount(count);
+        setApiData(response.data.items);
+        setGoods(response.data.items);
+        setViewMode('api');
+        setTotalCount(response.data.items.length);
+        setPageNo(1);
       } else {
-        setError('물건 정보를 불러올 수 없습니다.');
-        setGoods([]);
+        setError('API에서 물건을 조회할 수 없습니다.');
       }
     } catch (err) {
-      // AbortError는 무시 (정상적인 취소)
-      if (err.name === 'CanceledError' || err.name === 'AbortError') {
-        console.log('API 요청이 취소되었습니다.');
-        return;
-      }
-      
-      console.error('물건 조회 오류:', err);
-      setError('물건 정보를 불러오는 중 오류가 발생했습니다.');
-      setGoods([]);
+      console.error('API 조회 오류:', err);
+      setError('API 조회 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 페이지 또는 필터 변경 시 물건 조회
+  // 이력별 조회 (100개)
+  const handleFilterByHistory = () => {
+    if (apiData.length === 0) {
+      alert('먼저 API 조회를 실행해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const filtered = selectTop100(apiData);
+      setFilteredData(filtered);
+      setGoods(filtered);
+      setViewMode('filtered');
+      setTotalCount(filtered.length);
+      setPageNo(1);
+    } catch (err) {
+      console.error('이력별 필터링 오류:', err);
+      setError('이력별 필터링 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 데이터베이스에 저장
+  const handleSaveToDB = async () => {
+    if (filteredData.length === 0) {
+      alert('먼저 이력별 조회(100개)를 실행해주세요.');
+      return;
+    }
+
+    if (!confirm(`${filteredData.length}개의 물건을 데이터베이스에 저장하시겠습니까?\n기존 데이터는 모두 삭제됩니다.`)) {
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const response = await saveGoodsToDB(filteredData);
+      
+      if (response.success) {
+        alert(`${response.savedCount}개의 물건이 저장되었습니다.`);
+        // DB 조회로 전환
+        handleDBQuery();
+      } else {
+        alert('저장 실패: ' + response.message);
+      }
+    } catch (err) {
+      console.error('DB 저장 오류:', err);
+      alert('DB 저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // DB 조회
+  const handleDBQuery = async () => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const response = await getGoodsFromDB();
+      
+      if (response.success && response.items) {
+        setGoods(response.items);
+        setViewMode('db');
+        setTotalCount(response.items.length);
+        setPageNo(1);
+      } else {
+        setError('DB에서 물건을 조회할 수 없습니다.');
+      }
+    } catch (err) {
+      console.error('DB 조회 오류:', err);
+      setError('DB 조회 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 모든 데이터 삭제
+  const handleDeleteAll = async () => {
+    if (!confirm('정말로 모든 물건 데이터를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const response = await deleteAllGoods();
+      
+      if (response.success) {
+        alert(`${response.deletedCount}개의 물건이 삭제되었습니다.`);
+        // DB 조회로 전환
+        handleDBQuery();
+      } else {
+        alert('삭제 실패: ' + response.message);
+      }
+    } catch (err) {
+      console.error('DB 삭제 오류:', err);
+      alert('DB 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 현재 viewMode에 따라 표시할 데이터 가져오기
+  const getCurrentData = () => {
+    let items = goods;
+    
+    // 클라이언트 사이드 정렬
+    if (sortField) {
+      items = [...items].sort((a, b) => {
+        let aVal = a[sortField];
+        let bVal = b[sortField];
+        
+        // 숫자 비교
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        
+        // 문자열 비교
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return sortOrder === 'asc' 
+            ? aVal.localeCompare(bVal) 
+            : bVal.localeCompare(aVal);
+        }
+        
+        return 0;
+      });
+    }
+    
+    // 필터 적용 (클라이언트 사이드)
+    if (filters.goodsName) {
+      items = items.filter(item => 
+        item.goodsName && item.goodsName.includes(filters.goodsName)
+      );
+    }
+    
+    if (filters.minBidPriceFrom) {
+      const priceFrom = parseInt(filters.minBidPriceFrom);
+      items = items.filter(item => item.minBidPrice && item.minBidPrice >= priceFrom);
+    }
+    
+    if (filters.minBidPriceTo) {
+      const priceTo = parseInt(filters.minBidPriceTo);
+      items = items.filter(item => item.minBidPrice && item.minBidPrice <= priceTo);
+    }
+    
+    if (filters.appraisalPriceFrom) {
+      const priceFrom = parseInt(filters.appraisalPriceFrom);
+      items = items.filter(item => item.appraisalPrice && item.appraisalPrice >= priceFrom);
+    }
+    
+    if (filters.appraisalPriceTo) {
+      const priceTo = parseInt(filters.appraisalPriceTo);
+      items = items.filter(item => item.appraisalPrice && item.appraisalPrice <= priceTo);
+    }
+    
+    return items;
+  };
+
+  // 페이징 처리
+  const getPaginatedData = () => {
+    const items = getCurrentData();
+    const startIdx = (pageNo - 1) * numOfRows;
+    const endIdx = startIdx + numOfRows;
+    return items.slice(startIdx, endIdx);
+  };
+
+  // 초기 로딩 (DB 조회 우선)
   useEffect(() => {
-    // AbortController 생성
-    const abortController = new AbortController();
-    
-    fetchGoods(abortController.signal);
-    
-    // cleanup 함수: 컴포넌트가 언마운트되거나 의존성이 변경될 때 실행
-    return () => {
-      abortController.abort(); // 진행 중인 요청 취소
-      console.log('API 요청 취소 (페이지 변경 또는 컴포넌트 언마운트)');
-    };
-  }, [pageNo]);
+    handleDBQuery();
+  }, []);
 
   // 필터 변경 핸들러
   const handleFilterChange = (e) => {
@@ -131,25 +276,16 @@ function ListPage() {
   // 검색 버튼 클릭
   const handleSearch = () => {
     setPageNo(1);
-    // pageNo가 1이면 useEffect가 자동으로 호출되지 않으므로 수동 호출
-    if (pageNo === 1) {
-      const abortController = new AbortController();
-      fetchGoods(abortController.signal);
-    }
   };
 
   // 필터 초기화
   const handleResetFilters = () => {
     setFilters({
-      cltrNm: '',
-      cltrMnmtNo: '',
-      goodsPriceFrom: '',
-      goodsPriceTo: '',
-      openPriceFrom: '',
-      openPriceTo: '',
-      pbctBegnDtm: '',
-      pbctClsDtm: '',
-      ctgrHirkId: '',
+      goodsName: '',
+      minBidPriceFrom: '',
+      minBidPriceTo: '',
+      appraisalPriceFrom: '',
+      appraisalPriceTo: '',
     });
     setPageNo(1);
   };
@@ -172,24 +308,9 @@ function ListPage() {
     }
   };
 
-  // 정렬 변경 시 재조회
-  useEffect(() => {
-    if (sortField) {
-      // AbortController 생성
-      const abortController = new AbortController();
-      
-      fetchGoods(abortController.signal);
-      
-      // cleanup 함수
-      return () => {
-        abortController.abort();
-        console.log('API 요청 취소 (정렬 변경)');
-      };
-    }
-  }, [sortField, sortOrder]);
-
   // 전체 페이지 수 계산
-  const totalPages = Math.ceil(totalCount / numOfRows);
+  const filteredItems = getCurrentData();
+  const totalPages = Math.ceil(filteredItems.length / numOfRows);
 
   // 페이지 번호 배열 생성 (최대 10개)
   const getPageNumbers = () => {
@@ -224,116 +345,114 @@ function ListPage() {
         </button>
       </div>
 
+      {/* 버튼 그룹 */}
+      <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <h2 className="text-lg font-bold text-gray-800 mb-3">데이터 관리</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <button
+            onClick={handleApiQuery}
+            disabled={isLoading}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            API 조회
+          </button>
+          <button
+            onClick={handleFilterByHistory}
+            disabled={isLoading || apiData.length === 0}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            이력별 조회(100개)
+          </button>
+          <button
+            onClick={handleSaveToDB}
+            disabled={isLoading || filteredData.length === 0}
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            데이터베이스에 저장
+          </button>
+          <button
+            onClick={handleDBQuery}
+            disabled={isLoading}
+            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            DB 조회
+          </button>
+          <button
+            onClick={handleDeleteAll}
+            disabled={isLoading}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            모든 데이터 삭제
+          </button>
+          <div className="px-4 py-2 bg-gray-100 text-gray-700 rounded text-sm flex items-center justify-center">
+            모드: {viewMode === 'db' ? 'DB' : viewMode === 'api' ? 'API' : '이력별'}
+          </div>
+        </div>
+      </div>
+
       {/* 필터 섹션 */}
       {showFilters && (
         <div className="bg-white p-6 rounded-lg shadow mb-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4">검색 필터</h2>
           
-          {/* 기본 검색 */}
+          {/* 물건명 검색 */}
           <div className="mb-4">
-            <h3 className="font-semibold text-gray-700 mb-2">기본 검색</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">물건명</label>
-                <input
-                  type="text"
-                  name="cltrNm"
-                  value={filters.cltrNm}
-                  onChange={handleFilterChange}
-                  placeholder="물건명 검색"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">물건관리번호 (회차 공통)</label>
-                <input
-                  type="text"
-                  name="cltrMnmtNo"
-                  value={filters.cltrMnmtNo}
-                  onChange={handleFilterChange}
-                  placeholder="예: 2025-1234-001"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">같은 물건의 모든 회차를 검색합니다</p>
-              </div>
+            <label className="block text-sm text-gray-600 mb-1">물건명</label>
+            <input
+              type="text"
+              name="goodsName"
+              value={filters.goodsName}
+              onChange={handleFilterChange}
+              placeholder="물건명 검색"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* 최저입찰가 필터 */}
+          <div className="mb-4">
+            <label className="block text-sm text-gray-600 mb-1">최저입찰가</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="number"
+                name="minBidPriceFrom"
+                value={filters.minBidPriceFrom}
+                onChange={handleFilterChange}
+                placeholder="최소 금액"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-gray-500">~</span>
+              <input
+                type="number"
+                name="minBidPriceTo"
+                value={filters.minBidPriceTo}
+                onChange={handleFilterChange}
+                placeholder="최대 금액"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
 
-          {/* 가격 필터 */}
+          {/* 감정가 필터 */}
           <div className="mb-4">
-            <h3 className="font-semibold text-gray-700 mb-2">가격 범위</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">감정가</label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="number"
-                    name="goodsPriceFrom"
-                    value={filters.goodsPriceFrom}
-                    onChange={handleFilterChange}
-                    placeholder="최소"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-gray-500">~</span>
-                  <input
-                    type="number"
-                    name="goodsPriceTo"
-                    value={filters.goodsPriceTo}
-                    onChange={handleFilterChange}
-                    placeholder="최대"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">최저입찰가</label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="number"
-                    name="openPriceFrom"
-                    value={filters.openPriceFrom}
-                    onChange={handleFilterChange}
-                    placeholder="최소"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-gray-500">~</span>
-                  <input
-                    type="number"
-                    name="openPriceTo"
-                    value={filters.openPriceTo}
-                    onChange={handleFilterChange}
-                    placeholder="최대"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 입찰일자 필터 */}
-          <div className="mb-4">
-            <h3 className="font-semibold text-gray-700 mb-2">입찰 일자</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">입찰 시작일</label>
-                <input
-                  type="date"
-                  name="pbctBegnDtm"
-                  value={filters.pbctBegnDtm}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">입찰 종료일</label>
-                <input
-                  type="date"
-                  name="pbctClsDtm"
-                  value={filters.pbctClsDtm}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            <label className="block text-sm text-gray-600 mb-1">감정가</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="number"
+                name="appraisalPriceFrom"
+                value={filters.appraisalPriceFrom}
+                onChange={handleFilterChange}
+                placeholder="최소 금액"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-gray-500">~</span>
+              <input
+                type="number"
+                name="appraisalPriceTo"
+                value={filters.appraisalPriceTo}
+                onChange={handleFilterChange}
+                placeholder="최대 금액"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
 
@@ -358,7 +477,7 @@ function ListPage() {
       {/* 결과 수 표시 */}
       {!isLoading && !error && (
         <div className="mb-4 text-gray-600">
-          전체 <span className="font-bold text-blue-600">{totalCount.toLocaleString()}</span>건
+          전체 <span className="font-bold text-blue-600">{filteredItems.length.toLocaleString()}</span>건
           {sortField && (
             <span className="ml-4 text-sm text-gray-500">
               (정렬: {sortField} {sortOrder === 'asc' ? '오름차순' : '내림차순'})
@@ -388,8 +507,8 @@ function ListPage() {
           {/* 데스크톱: 테이블 형식 */}
           <div className="hidden md:block">
             <GoodsTable 
-              goods={goods}
-              onFavoriteChange={fetchGoods}
+              goods={getPaginatedData()}
+              onFavoriteChange={handleDBQuery}
               sortField={sortField}
               sortOrder={sortOrder}
               onSort={handleSort}
@@ -398,11 +517,11 @@ function ListPage() {
 
           {/* 모바일: 카드 형식 */}
           <div className="md:hidden grid grid-cols-1 gap-4">
-            {goods.map((item, index) => (
+            {getPaginatedData().map((item, index) => (
               <GoodsMobileCard 
-                key={item.historyNo || `mobile-${index}`}
+                key={item.historyNo || item.goodsNo || `mobile-${index}`}
                 item={item}
-                onFavoriteChange={fetchGoods}
+                onFavoriteChange={handleDBQuery}
               />
             ))}
           </div>

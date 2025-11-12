@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { addFavorite, isAuthenticated } from '../utils/api';
 
 /**
@@ -42,10 +43,10 @@ function GoodsMobileCard({ item, onFavoriteChange }) {
     try {
       await addFavorite({
         historyNo: item.historyNo,
-        goodsNo: item.goodsNo,
+        goodsNo: item.historyNo,  // DB에는 goodsNo가 없으므로 historyNo 사용
         goodsName: item.goodsName,
         minBidPrice: item.minBidPrice,
-        bidCloseDate: item.bidCloseDate,
+        bidCloseDate: item.bidCloseDate || '',
       });
       
       alert('관심물건에 등록되었습니다.');
@@ -69,12 +70,10 @@ function GoodsMobileCard({ item, onFavoriteChange }) {
         {item.goodsName || '물건명 없음'}
       </h3>
 
-      {/* 상태 */}
-      {item.statusName && (
-        <div className="mb-2">
-          <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-            {item.statusName}
-          </span>
+      {/* 물건이력번호 */}
+      {item.historyNo && (
+        <div className="mb-2 text-sm text-gray-600">
+          물건이력번호: {item.historyNo}
         </div>
       )}
 
@@ -88,11 +87,6 @@ function GoodsMobileCard({ item, onFavoriteChange }) {
         {item.appraisalPrice && (
           <div className="text-gray-600">
             감정가: {formatNumber(item.appraisalPrice)}원
-          </div>
-        )}
-        {item.feeRate && (
-          <div className="text-gray-500 text-xs">
-            {item.feeRate}
           </div>
         )}
       </div>
@@ -116,22 +110,24 @@ function GoodsMobileCard({ item, onFavoriteChange }) {
       {showDetails && (
         <div className="mt-3 pt-3 border-t border-gray-200 space-y-2 text-sm">
           <div>
-            <span className="font-semibold text-gray-700">물건이력번호:</span>
-            <p className="text-gray-600">{item.historyNo || '-'}</p>
-          </div>
-          <div>
-            <span className="font-semibold text-gray-700">물건관리번호:</span>
-            <p className="text-gray-600">{item.goodsNo || '-'}</p>
-          </div>
-          <div>
             <span className="font-semibold text-gray-700">주소:</span>
-            <p className="text-gray-600">{item.roadAddress || item.address || '-'}</p>
+            <p className="text-gray-600">{item.address || '-'}</p>
           </div>
           <div>
-            <span className="font-semibold text-gray-700">카테고리:</span>
-            <p className="text-gray-600">{item.categoryName || '-'}</p>
+            <span className="font-semibold text-gray-700">입찰마감일:</span>
+            <p className="text-gray-600">{formatDate(item.bidCloseDate)}</p>
           </div>
         </div>
+      )}
+
+      {/* 구매하기 버튼 */}
+      {item.historyNo && (
+        <Link
+          to={`/goods/${item.historyNo}`}
+          className="mt-3 w-full block text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition font-semibold"
+        >
+          상세보기 / 구매하기
+        </Link>
       )}
 
       {/* 관심등록 버튼 */}
@@ -139,7 +135,7 @@ function GoodsMobileCard({ item, onFavoriteChange }) {
         <button
           onClick={handleFavoriteToggle}
           disabled={isLoading}
-          className={`mt-3 w-full px-4 py-2 rounded transition ${
+          className={`mt-2 w-full px-4 py-2 rounded transition ${
             isLoading
               ? 'bg-gray-300 cursor-not-allowed'
               : 'bg-yellow-500 hover:bg-yellow-600 text-white'

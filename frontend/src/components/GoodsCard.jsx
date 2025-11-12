@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { addFavorite, deleteFavoriteByGoodsNo, isAuthenticated } from '../utils/api';
 
+// 기능 토글 설정 (숨김처리 제어)
+const FEATURES = {
+  FAVORITES: false  // 관심물건 기능
+};
+
 /**
  * 숫자를 천단위 구분 형식으로 변환
  * @param {number} num - 숫자
@@ -82,7 +87,7 @@ function GoodsCard({ goods, onFavoriteChange }) {
   };
 
   return (
-    <div className="border border-gray-300 rounded-lg p-4 shadow hover:shadow-lg transition">
+    <div className="border border-gray-300 rounded-lg p-4 shadow hover:shadow-lg transition cursor-pointer">
       {/* 물건명 */}
       <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">
         {goods.goodsName || '물건명 없음'}
@@ -147,8 +152,8 @@ function GoodsCard({ goods, onFavoriteChange }) {
 
       {/* 버튼 영역 */}
       <div className="flex gap-2">
-        {/* 관심등록 버튼 (로그인 시에만 표시) */}
-        {isLoggedIn && (
+        {/* 관심등록 버튼 (FAVORITES 기능 활성화 시에만 표시) */}
+        {FEATURES.FAVORITES && isLoggedIn && (
           <button
             onClick={handleFavoriteToggle}
             disabled={isLoading}

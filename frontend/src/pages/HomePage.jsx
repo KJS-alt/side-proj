@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import GoodsCard from '../components/GoodsCard';
-import { getGoodsList } from '../utils/api';
+import { getGoodsFromDB } from '../utils/api';
 
 /**
  * HomePage 컴포넌트 - 메인 페이지
@@ -11,15 +11,16 @@ function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // 최근 물건 6개 조회
+  // DB에서 물건 조회 (최근 6개)
   useEffect(() => {
     const fetchRecentGoods = async () => {
       setIsLoading(true);
       try {
-        const response = await getGoodsList(1, 6);
+        const response = await getGoodsFromDB();
         
-        if (response.success && response.data?.items) {
-          setGoods(response.data.items);
+        if (response.success && response.items) {
+          // 최근 6개만 표시
+          setGoods(response.items.slice(0, 6));
         } else {
           setError('물건 정보를 불러올 수 없습니다.');
         }
@@ -79,10 +80,15 @@ function HomePage() {
         {!isLoading && !error && goods.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {goods.map((item) => (
-              <GoodsCard 
-                key={item.goodsNo} 
-                goods={item}
-              />
+              <Link 
+                key={item.historyNo} 
+                to={`/goods/${item.historyNo}`}
+                className="block"
+              >
+                <GoodsCard 
+                  goods={item}
+                />
+              </Link>
             ))}
           </div>
         )}
@@ -101,9 +107,9 @@ function HomePage() {
           서비스 안내
         </h3>
         <ul className="space-y-2 text-gray-700">
-          <li>• 한국자산관리공사(캠코) 온비드 공매물건을 조회할 수 있습니다.</li>
-          <li>• 회원가입 후 관심물건을 등록하여 관리할 수 있습니다.</li>
-          <li>• 최근 6개월 이내의 물건만 조회 가능합니다.</li>
+          <li>• 한국자산관리공사(캠코) 온비드 공매물건을 조회하고 구매할 수 있습니다.</li>
+          <li>• 물건을 클릭하여 상세 정보를 확인하고 구매할 수 있습니다.</li>
+          <li>• 최저입찰가로 즉시 구매가 가능합니다.</li>
         </ul>
       </div>
     </div>
