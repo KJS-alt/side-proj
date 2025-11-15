@@ -31,7 +31,7 @@ public class GoodsSyncScheduler {
     public void syncLatestGoods() {
         try {
             log.info("[Scheduler] 온비드 최신 데이터 동기화 시작");
-            List<Goods> apiItems = onbidApiService.getGoodsItems(1, 9999, null, null);
+            List<Goods> apiItems = onbidApiService.getGoodsItems(1, 1000, null, null);
             List<Goods> latest = selectTop100(apiItems);
             int synced = goodsService.saveGoodsListToDB(latest);
             goodsSyncStatusService.markSynced(java.time.LocalDateTime.now());

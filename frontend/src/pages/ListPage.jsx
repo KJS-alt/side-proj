@@ -134,8 +134,8 @@ function ListPage() {
     setError('');
     
     try {
-      // 모든 데이터 조회 (numOfRows를 크게 설정)
-      const response = await getGoodsList(1, 9999, {});
+      // 모든 데이터 조회 (API 호출량을 1,000건으로 제한)
+      const response = await getGoodsList(1, 1000, {});
       
       if (response.success && response.data?.items) {
         setApiData(response.data.items);

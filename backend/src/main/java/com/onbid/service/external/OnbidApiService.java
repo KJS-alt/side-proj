@@ -32,15 +32,10 @@ public class OnbidApiService {
     private final JAXBContext jaxbContext;
 
     /**
-     * 생성자 - RestTemplate 및 JAXB Context 초기화 (타임아웃 설정 포함)
+     * 생성자 - RestTemplate 및 JAXB Context 초기화
      */
     public OnbidApiService() {
-        // RestTemplate에 타임아웃 설정 추가 (15초)
         this.restTemplate = new RestTemplate();
-//        this.restTemplate.setRequestFactory(new org.springframework.http.client.SimpleClientHttpRequestFactory() {{
-//            setConnectTimeout(1500000);  // 연결 타임아웃: 15초
-//            setReadTimeout(3000000);      // 읽기 타임아웃: 30초
-//        }});
         
         try {
             // GoodsResponse를 위한 JAXB Context 생성
@@ -136,7 +131,7 @@ public class OnbidApiService {
             // URI 객체로 변환하여 중복 인코딩 방지
             URI uri = URI.create(url);
             
-            log.info(">>> 외부 API 요청 시작 (타임아웃: 연결 15초, 읽기 30초)");
+            log.info(">>> 외부 API 요청 시작");
             long startTime = System.currentTimeMillis();
             String response = restTemplate.getForObject(uri, String.class);
             long endTime = System.currentTimeMillis();
@@ -163,10 +158,8 @@ public class OnbidApiService {
             return response;
 
         } catch (org.springframework.web.client.ResourceAccessException e) {
-            log.error("=== OnBid API 타임아웃 또는 연결 실패 ===");
-            log.error("Onbid API 서버 응답 없음 (타임아웃 또는 네트워크 오류)");
-            log.error("상세 오류: {}", e.getMessage());
-            throw new RuntimeException("Onbid API 연결 실패 (타임아웃 또는 네트워크 오류). 잠시 후 다시 시도해주세요.", e);
+            log.error("Onbid API 서버 응답 없음 (네트워크 오류)");
+            throw new RuntimeException("Onbid API 연결 실패: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("=== OnBid API 호출 실패 ===");
             log.error("오류 타입: {}", e.getClass().getName());
