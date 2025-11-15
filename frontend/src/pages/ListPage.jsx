@@ -508,7 +508,6 @@ function ListPage() {
           <div className="hidden md:block">
             <GoodsTable 
               goods={getPaginatedData()}
-              onFavoriteChange={handleDBQuery}
               sortField={sortField}
               sortOrder={sortOrder}
               onSort={handleSort}
@@ -521,7 +520,6 @@ function ListPage() {
               <GoodsMobileCard 
                 key={item.historyNo || item.goodsNo || `mobile-${index}`}
                 item={item}
-                onFavoriteChange={handleDBQuery}
               />
             ))}
           </div>

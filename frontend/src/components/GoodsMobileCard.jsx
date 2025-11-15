@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { addFavorite, isAuthenticated } from '../utils/api';
 
 /**
  * 숫자를 천단위 구분 형식으로 변환
@@ -26,42 +25,8 @@ const formatDate = (dateStr) => {
 /**
  * GoodsMobileCard 컴포넌트 - 모바일용 카드 형식
  */
-function GoodsMobileCard({ item, onFavoriteChange }) {
-  const [isLoading, setIsLoading] = useState(false);
+function GoodsMobileCard({ item }) {
   const [showDetails, setShowDetails] = useState(false);
-  const isLoggedIn = isAuthenticated();
-
-  // 관심물건 등록
-  const handleFavoriteToggle = async () => {
-    if (!isLoggedIn) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      await addFavorite({
-        historyNo: item.historyNo,
-        goodsNo: item.historyNo,  // DB에는 goodsNo가 없으므로 historyNo 사용
-        goodsName: item.goodsName,
-        minBidPrice: item.minBidPrice,
-        bidCloseDate: item.bidCloseDate || '',
-      });
-      
-      alert('관심물건에 등록되었습니다.');
-      if (onFavoriteChange) onFavoriteChange();
-    } catch (error) {
-      console.error('관심물건 처리 실패:', error);
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert('처리 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="border border-gray-300 rounded-lg p-4 shadow bg-white">
@@ -130,20 +95,6 @@ function GoodsMobileCard({ item, onFavoriteChange }) {
         </Link>
       )}
 
-      {/* 관심등록 버튼 */}
-      {isLoggedIn && (
-        <button
-          onClick={handleFavoriteToggle}
-          disabled={isLoading}
-          className={`mt-2 w-full px-4 py-2 rounded transition ${
-            isLoading
-              ? 'bg-gray-300 cursor-not-allowed'
-              : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-          }`}
-        >
-          {isLoading ? '처리중...' : '★ 관심등록'}
-        </button>
-      )}
     </div>
   );
 }

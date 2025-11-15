@@ -1,14 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
-import PrivateRoute from './components/PrivateRoute';
 import HomePage from './pages/HomePage';
 import ListPage from './pages/ListPage';
 import GoodsDetailPage from './pages/GoodsDetailPage';
 import PurchasesPage from './pages/PurchasesPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import FavoritesPage from './pages/FavoritesPage';
-import ProfilePage from './pages/ProfilePage';
 
 /**
  * App 컴포넌트 - 메인 애플리케이션 라우터
@@ -35,31 +30,6 @@ function App() {
             {/* 구매 목록 페이지 */}
             <Route path="/purchases" element={<PurchasesPage />} />
             
-            {/* 로그인 페이지 */}
-            <Route path="/login" element={<LoginPage />} />
-            
-            {/* 회원가입 페이지 */}
-            <Route path="/register" element={<RegisterPage />} />
-            
-            {/* 관심물건 페이지 (인증 필요) */}
-            <Route 
-              path="/favorites" 
-              element={
-                <PrivateRoute>
-                  <FavoritesPage />
-                </PrivateRoute>
-              } 
-            />
-            
-            {/* 프로필/설정 페이지 (인증 필요) */}
-            <Route 
-              path="/profile" 
-              element={
-                <PrivateRoute>
-                  <ProfilePage />
-                </PrivateRoute>
-              } 
-            />
           </Routes>
         </main>
       </div>

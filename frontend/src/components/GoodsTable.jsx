@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { addFavorite, deleteFavoriteByGoodsNo, isAuthenticated } from '../utils/api';
-
-// 기능 토글 설정 (숨김처리 제어)
-const FEATURES = {
-  FAVORITES: false  // 관심물건 기능
-};
 
 /**
  * 숫자를 천단위 구분 형식으로 변환
@@ -35,59 +29,14 @@ const formatDate = (dateStr) => {
 };
 
 /**
- * 지역 추출 (주소에서 시도 추출)
- */
-const extractRegion = (address) => {
-  if (!address) return '-';
-  const parts = address.split(' ');
-  return parts[0] || '-';
-};
-
-/**
  * GoodsTable 컴포넌트 - 물건 정보 테이블
  */
-function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
+function GoodsTable({ goods, sortField, sortOrder, onSort }) {
   const [expandedRow, setExpandedRow] = useState(null);
-  const [loadingFavorite, setLoadingFavorite] = useState({});
-  const isLoggedIn = isAuthenticated();
 
   // 행 클릭 핸들러 (상세 정보 토글)
   const handleRowClick = (itemId) => {
     setExpandedRow(expandedRow === itemId ? null : itemId);
-  };
-
-  // 관심물건 등록/삭제
-  const handleFavoriteToggle = async (e, item) => {
-    e.stopPropagation(); // 행 클릭 이벤트 전파 중지
-    
-    if (!isLoggedIn) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
-    setLoadingFavorite(prev => ({ ...prev, [item.historyNo]: true }));
-    
-    try {
-      await addFavorite({
-        historyNo: item.historyNo,
-        goodsNo: item.historyNo,  // DB에는 goodsNo가 없으므로 historyNo 사용
-        goodsName: item.goodsName,
-        minBidPrice: item.minBidPrice,
-        bidCloseDate: item.bidCloseDate || '',
-      });
-      
-      alert('관심물건에 등록되었습니다.');
-      if (onFavoriteChange) onFavoriteChange();
-    } catch (error) {
-      console.error('관심물건 처리 실패:', error);
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert('처리 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setLoadingFavorite(prev => ({ ...prev, [item.historyNo]: false }));
-    }
   };
 
   // 정렬 아이콘 표시
@@ -125,11 +74,6 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">
               소재지
             </th>
-            {FEATURES.FAVORITES && isLoggedIn && (
-              <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">
-                관심
-              </th>
-            )}
           </tr>
         </thead>
         <tbody>
@@ -162,27 +106,12 @@ function GoodsTable({ goods, onFavoriteChange, sortField, sortOrder, onSort }) {
                     {item.address || '-'}
                   </div>
                 </td>
-                {FEATURES.FAVORITES && isLoggedIn && (
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={(e) => handleFavoriteToggle(e, item)}
-                      disabled={loadingFavorite[item.historyNo]}
-                      className={`text-xs px-3 py-1 rounded transition ${
-                        loadingFavorite[item.historyNo]
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                      }`}
-                    >
-                      {loadingFavorite[item.historyNo] ? '...' : '★'}
-                    </button>
-                  </td>
-                )}
               </tr>
 
               {/* 확장 행 (상세 정보) */}
               {expandedRow === item.historyNo && (
                 <tr className="bg-gray-50">
-                  <td colSpan={(FEATURES.FAVORITES && isLoggedIn) ? 7 : 6} className="px-4 py-4">
+                  <td colSpan={6} className="px-4 py-4">
                     <div className="text-sm mb-4">
                       <div className="space-y-2">
                         <div>

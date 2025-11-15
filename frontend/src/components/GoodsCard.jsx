@@ -1,11 +1,3 @@
-import { useState } from 'react';
-import { addFavorite, deleteFavoriteByGoodsNo, isAuthenticated } from '../utils/api';
-
-// 기능 토글 설정 (숨김처리 제어)
-const FEATURES = {
-  FAVORITES: false  // 관심물건 기능
-};
-
 /**
  * 숫자를 천단위 구분 형식으로 변환
  * @param {number} num - 숫자
@@ -36,55 +28,8 @@ const formatDate = (dateStr) => {
 /**
  * GoodsCard 컴포넌트 - 물건 정보 카드
  * @param {object} props.goods - 물건 정보
- * @param {function} props.onFavoriteChange - 관심물건 변경 시 콜백
  */
-function GoodsCard({ goods, onFavoriteChange }) {
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const isLoggedIn = isAuthenticated();
-
-  // 관심물건 등록/삭제 토글
-  const handleFavoriteToggle = async () => {
-    if (!isLoggedIn) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      if (isFavorite) {
-        // 관심물건 삭제
-        await deleteFavoriteByGoodsNo(goods.goodsNo);
-        setIsFavorite(false);
-        alert('관심물건에서 삭제되었습니다.');
-      } else {
-        // 관심물건 등록
-        await addFavorite({
-          historyNo: goods.historyNo,
-          goodsNo: goods.goodsNo,
-          goodsName: goods.goodsName,
-          minBidPrice: goods.minBidPrice,
-          bidCloseDate: goods.bidCloseDate,
-        });
-        setIsFavorite(true);
-        alert('관심물건에 등록되었습니다.');
-      }
-      
-      // 부모 컴포넌트에 변경 알림
-      if (onFavoriteChange) {
-        onFavoriteChange();
-      }
-    } catch (error) {
-      console.error('관심물건 처리 실패:', error);
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert('처리 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+function GoodsCard({ goods }) {
 
   return (
     <div className="border border-gray-300 rounded-lg p-4 shadow hover:shadow-lg transition cursor-pointer">
@@ -150,35 +95,17 @@ function GoodsCard({ goods, onFavoriteChange }) {
         </div>
       )}
 
-      {/* 버튼 영역 */}
-      <div className="flex gap-2">
-        {/* 관심등록 버튼 (FAVORITES 기능 활성화 시에만 표시) */}
-        {FEATURES.FAVORITES && isLoggedIn && (
-          <button
-            onClick={handleFavoriteToggle}
-            disabled={isLoading}
-            className={`flex-1 px-4 py-2 rounded transition ${
-              isFavorite
-                ? 'bg-red-500 hover:bg-red-600 text-white'
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isLoading ? '처리중...' : isFavorite ? '관심삭제' : '관심등록'}
-          </button>
-        )}
-
-        {/* 조회수, 관심수 */}
-        {(goods.inquiryCount || goods.favoriteCount) && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            {goods.inquiryCount && (
-              <span>조회 {formatNumber(goods.inquiryCount)}</span>
-            )}
-            {goods.favoriteCount && (
-              <span>관심 {formatNumber(goods.favoriteCount)}</span>
-            )}
-          </div>
-        )}
-      </div>
+      {/* 조회수, 관심수 */}
+      {(goods.inquiryCount || goods.favoriteCount) && (
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          {goods.inquiryCount && (
+            <span>조회 {formatNumber(goods.inquiryCount)}</span>
+          )}
+          {goods.favoriteCount && (
+            <span>관심 {formatNumber(goods.favoriteCount)}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

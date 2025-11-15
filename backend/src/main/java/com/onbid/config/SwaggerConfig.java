@@ -1,11 +1,9 @@
 package com.onbid.config;
 
-import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,16 +28,7 @@ public class SwaggerConfig {
                                 .url("https://github.com/kjs-alt/side-proj"))
                         .license(new License()
                                 .name("Apache 2.0")
-                                .url("http://www.apache.org/licenses/LICENSE-2.0.html")))
-                .components(new Components()
-                        .addSecuritySchemes("bearer-token",
-                                new SecurityScheme()
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")
-                                        .in(SecurityScheme.In.HEADER)
-                                        .name("Authorization")
-                                        .description("JWT 토큰을 입력하세요 (Bearer 접두사는 자동으로 추가됩니다)")));
+                                .url("http://www.apache.org/licenses/LICENSE-2.0.html")));
     }
 }
 

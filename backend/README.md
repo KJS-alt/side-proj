@@ -1,294 +1,149 @@
 # 온비드 공매물건 조회 시스템 - REST API Backend
 
-한국자산관리공사 온비드 OpenAPI를 활용한 공매물건 조회 REST API 백엔드
+한국자산관리공사 온비드 OpenAPI를 호출해 공매물건을 조회·가공·저장하는 REST API 백엔드입니다.  
+2025-11-15 기준으로 **회원/관심물건/JWT 기능은 완전히 제거**되어 공매 데이터 처리와 매매 이력 관리에만 집중합니다.
 
 ## 📋 프로젝트 개요
 
-- **프로젝트명**: side-proj (온비드 공매물건 조회 시스템)
-- **아키텍처**: REST API 백엔드 (프론트엔드는 별도 React 프로젝트로 구성 예정)
-- **목적**: 온비드 공매물건 조회 및 관심물건 관리 REST API 제공
-- **개발 기간**: 약 1주 (7일)
-- **GitHub**: https://github.com/kjs-alt/side-proj
+- **구성**: Spring Boot 백엔드 + React 프런트엔드(별도 디렉터리)
+- **핵심 기능**
+  - 온비드 공매물건 실시간 조회 및 필터링
+  - 100건 샘플 추출 후 MariaDB에 일괄 저장/삭제
+  - 저장된 물건을 기준으로 구매 이력 기록/조회
+  - Swagger UI 기반 API 테스트
 
 ## 🛠️ 기술 스택
 
-### Backend (REST API)
-- **프레임워크**: Spring Boot 3.5.7
-- **언어**: Java 21
-- **빌드 도구**: Gradle
-- **ORM**: MyBatis (어노테이션 방식)
-- **API 통신**: RestTemplate
-- **인증**: JWT (JSON Web Token)
-- **보안**: Spring Security
-- **API 문서화**: SpringDoc OpenAPI (Swagger)
+| 구분 | 사용 기술 |
+|------|-----------|
+| Framework | Spring Boot 3.5.7 |
+| Language | Java 21 |
+| Build | Gradle 8.x |
+| DB Access | MyBatis (어노테이션) |
+| External API | RestTemplate + JAXB |
+| DB | MariaDB 11.4 |
+| Docs | SpringDoc OpenAPI 2.7 |
 
-### Frontend (예정)
-- **프레임워크**: React + Vite
-- **언어**: JavaScript
-- **스타일링**: Tailwind CSS
-- **별도 리포지토리로 관리 예정**
+> 🔐 **보안/인증**: 현재 제공하지 않습니다. 모든 엔드포인트는 공개 상태이며, CORS 는 `WebConfig`에서 직접 허용합니다.
 
-### Database
-- **DBMS**: MariaDB 11.4
-- **DB 매핑**: MyBatis 어노테이션 (@Select, @Insert, @Update, @Delete)
+## 🚀 실행 방법
 
-## 🚀 시작하기
+1. **환경 변수 설정**
+   ```powershell
+   # PowerShell
+   $env:ONBID_API_KEY="your-api-key"
+   ```
+   ```bash
+   # macOS/Linux
+   export ONBID_API_KEY="your-api-key"
+   ```
+   또는 `src/main/resources/application.properties`에서 `onbid.api.key` 값을 직접 지정합니다.
 
-### 1. 사전 요구사항
+2. **데이터베이스 준비**
+   ```sql
+   CREATE DATABASE IF NOT EXISTS onbid CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   USE onbid;
+   SOURCE src/main/resources/sql/schema.sql;
+   ```
 
-- JDK 21 이상
-- MariaDB 11.4 이상
-- Gradle 8.x
-- 온비드 API 키 (공공데이터 포털에서 발급)
+3. **애플리케이션 실행**
+   ```bash
+   ./gradlew bootRun
+   # 또는
+   ./gradlew build
+   java -jar build/libs/backend-0.0.1-SNAPSHOT.jar
+   ```
+   기본 포트: `http://localhost:8081`
 
-### 2. 데이터베이스 설정
+4. **Swagger UI**
+   - http://localhost:8081/swagger-ui.html
+   - http://localhost:8081/v3/api-docs
 
-```sql
--- MariaDB에 데이터베이스 생성
-CREATE DATABASE IF NOT EXISTS onbid CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE onbid;
+## 📡 주요 API
 
--- 테이블 생성
-SOURCE src/main/resources/sql/schema.sql;
-```
+### 1. 공매물건 API (`/api/goods`)
 
-또는 `src/main/resources/sql/schema.sql` 파일을 직접 실행하세요.
+| 메서드 | 엔드포인트 | 설명 |
+|--------|------------|------|
+| GET | `/api/goods` | 온비드 API에서 조건 기반 조회 |
+| GET | `/api/goods/items` | 목록만 간단 조회 |
+| GET | `/api/goods/xml` | XML 원본 확인 (디버깅용) |
+| GET | `/api/goods/db` | DB에 저장된 물건 목록 |
+| GET | `/api/goods/db/{historyNo}` | 특정 물건 상세 |
+| POST | `/api/goods/db/batch` | 물건 목록 일괄 저장 |
+| DELETE | `/api/goods/db/all` | DB 전체 삭제 |
 
-### 3. 환경 변수 설정
+### 2. 매매 API (`/api/purchases`)
 
-#### Windows (PowerShell)
-```powershell
-$env:ONBID_API_KEY="your-api-key-here"
-```
+| 메서드 | 엔드포인트 | 설명 |
+|--------|------------|------|
+| POST | `/api/purchases` | 구매 생성 |
+| GET | `/api/purchases` | 전체 구매 이력 |
+| GET | `/api/purchases/{historyNo}` | 특정 물건의 구매 이력 |
 
-#### macOS/Linux
-```bash
-export ONBID_API_KEY="your-api-key-here"
-```
-
-또는 `src/main/resources/application.properties`에서 직접 설정:
-```properties
-onbid.api.key=your-api-key-here
-```
-
-### 4. 애플리케이션 실행
-
-```bash
-# Gradle로 실행
-./gradlew bootRun
-
-# 또는 JAR 파일 빌드 후 실행
-./gradlew build
-java -jar build/libs/backend-0.0.1-SNAPSHOT.jar
-```
-
-애플리케이션이 `http://localhost:8081`에서 실행됩니다.
-
-## 📚 API 문서 및 테스트
-
-### Swagger UI (추천)
-애플리케이션 실행 후 다음 URL에서 **대화형 API 문서**를 확인하고 직접 테스트할 수 있습니다:
-
-- **Swagger UI**: http://localhost:8081/swagger-ui.html
-- **API Docs (JSON)**: http://localhost:8081/v3/api-docs
-
-> 💡 **Tip**: Swagger UI를 통해 모든 API를 브라우저에서 바로 테스트할 수 있습니다!
-> 
-> 1. 회원가입/로그인으로 JWT 토큰 발급
-> 2. 우측 상단 "Authorize" 버튼 클릭
-> 3. 발급받은 토큰 입력
-> 4. 인증이 필요한 API 테스트 가능
-
-### 주요 API 엔드포인트
-
-#### 1. 사용자 API (`/api/users`)
-
-| 메서드 | 엔드포인트 | 설명 | 인증 |
-|--------|-----------|------|------|
-| POST | `/api/users/register` | 회원가입 | ❌ |
-| POST | `/api/users/login` | 로그인 | ❌ |
-| GET | `/api/users/me` | 내 정보 조회 | ✅ |
-
-#### 2. 관심물건 API (`/api/favorites`)
-
-| 메서드 | 엔드포인트 | 설명 | 인증 |
-|--------|-----------|------|------|
-| GET | `/api/favorites` | 관심물건 목록 | ✅ |
-| POST | `/api/favorites` | 관심물건 등록 | ✅ |
-| DELETE | `/api/favorites/{id}` | 관심물건 삭제 | ✅ |
-| GET | `/api/favorites/check/{goodsNo}` | 관심물건 여부 확인 | ✅ |
-
-#### 3. 공매물건 API (`/api/goods`)
-
-| 메서드 | 엔드포인트 | 설명 | 인증 |
-|--------|-----------|------|------|
-| GET | `/api/goods` | 물건 목록 조회 | ❌ |
-| GET | `/api/goods/items` | 물건 목록만 간단 조회 | ❌ |
-| GET | `/api/goods/xml` | XML 원본 조회 (디버깅) | ❌ |
-
-## 🔐 인증 방식
-
-### JWT 토큰 인증
-
-1. **로그인**으로 JWT 토큰 발급
-2. 이후 요청 시 **Authorization 헤더**에 토큰 포함
+## 📁 디렉터리 구조
 
 ```
-Authorization: Bearer {your-jwt-token}
-```
-
-### 예시: 로그인 및 API 호출
-
-```bash
-# 1. 회원가입
-curl -X POST http://localhost:8081/api/users/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123",
-    "username": "테스트사용자"
-  }'
-
-# 2. 로그인
-curl -X POST http://localhost:8081/api/users/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123"
-  }'
-
-# 3. 내 정보 조회 (토큰 필요)
-curl -X GET http://localhost:8081/api/users/me \
-  -H "Authorization: Bearer {받은_토큰}"
-```
-
-## 📁 프로젝트 구조
-
-```
-src/main/java/com/onbid/
-├── BackendApplication.java          # 메인 애플리케이션
+backend/src/main/java/com/onbid/
+├── BackendApplication.java
 ├── config/
-│   ├── SwaggerConfig.java           # Swagger 설정
-│   └── WebConfig.java               # CORS 설정
+│   ├── SwaggerConfig.java      # Swagger 설정
+│   └── WebConfig.java          # CORS 및 Front 허용
 ├── controller/
-│   └── api/                         # REST API 컨트롤러
-│       ├── UserApiController.java
-│       ├── FavoriteApiController.java
-│       └── GoodsApiController.java
-├── domain/                          # 엔티티 및 DTO
-│   ├── User.java
-│   ├── Favorite.java
-│   ├── Goods.java
-│   └── GoodsResponse.java
-├── dto/                             # 요청/응답 DTO
-│   ├── LoginRequest.java
-│   ├── LoginResponse.java
-│   ├── RegisterRequest.java
-│   └── UserResponse.java
-├── mapper/                          # MyBatis Mapper
-│   ├── UserMapper.java
-│   └── FavoriteMapper.java
-├── security/                        # 보안 설정 (JWT)
-│   ├── JwtTokenProvider.java
-│   ├── JwtAuthenticationFilter.java
-│   └── SecurityConfig.java
-└── service/                         # 서비스 계층
-    ├── UserService.java
-    ├── FavoriteService.java
-    └── OnbidApiService.java
-
-src/main/resources/
-├── application.properties           # 애플리케이션 설정
-└── sql/
-    └── schema.sql                   # 데이터베이스 스키마
+│   ├── GoodsApiController.java
+│   └── PurchaseApiController.java
+├── service/
+│   ├── OnbidApiService.java    # 온비드 API + JAXB 파싱
+│   ├── GoodsService.java
+│   └── PurchaseService.java
+├── mapper/
+│   ├── GoodsMapper.java
+│   └── PurchaseMapper.java
+├── domain/
+│   ├── Goods.java / GoodsEntity.java / GoodsResponse.java
+│   ├── Purchase.java
+│   └── PurchaseRequest.java
+└── resources/
+    ├── application.properties
+    └── sql/schema.sql
 ```
 
-## 🗄️ 데이터베이스 스키마
+## 🗄️ 데이터베이스 개요
 
-### users (사용자)
-```sql
-CREATE TABLE users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    username VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-```
+`schema.sql` 에 정의된 현재 테이블은 두 개뿐입니다.
 
-### favorites (관심물건)
-```sql
-CREATE TABLE favorites (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id BIGINT NOT NULL,
-    goods_no VARCHAR(50) NOT NULL,
-    goods_name VARCHAR(500),
-    min_bid_price BIGINT,
-    bid_close_date VARCHAR(14),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY uk_user_goods (user_id, goods_no)
-);
-```
+1. **goods**
+   - `history_no`, `goods_name`, `min_bid_price`, `appraisal_price`, `bid_close_date`, `address` 등 핵심 열만 보관
+   - 조회/정렬 인덱스: `history_no`, `bid_close_date`
 
-## ⚙️ 설정 파일
+2. **purchases**
+   - `history_no`, `purchase_price`, `purchase_status`, `created_at`
+   - `history_no`는 `goods(history_no)`를 참조하며 `ON DELETE CASCADE`
 
-### application.properties 주요 설정
+## ⚙️ 주요 설정 (application.properties)
 
 ```properties
-# 서버 포트
 server.port=8081
 
-# MariaDB 연결
-spring.datasource.url=jdbc:mariadb://localhost:3306/onbid
+spring.datasource.url=jdbc:mariadb://localhost:3306/onbid?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=Asia/Seoul
 spring.datasource.username=root
 spring.datasource.password=1234
+spring.datasource.driver-class-name=org.mariadb.jdbc.Driver
 
-# JWT 설정
-jwt.secret=your-secret-key
-jwt.expiration=86400000
+spring.sql.init.mode=never
+spring.sql.init.schema-locations=classpath:sql/schema.sql
 
-# Swagger 설정
-springdoc.api-docs.path=/api-docs
-springdoc.swagger-ui.path=/swagger-ui.html
+mybatis.type-aliases-package=com.onbid.domain
+mybatis.configuration.map-underscore-to-camel-case=true
+mybatis.configuration.log-impl=org.apache.ibatis.logging.stdout.StdOutImpl
+
+onbid.api.key=${ONBID_API_KEY}
+onbid.api.url=http://openapi.onbid.co.kr/openapi/services/KamcoPblsalThingInquireSvc/getKamcoPbctCltrList
 ```
 
-## 🔧 개발 도구
+## 📝 참고
 
-- **IDE**: IntelliJ IDEA, Cursor
-- **API 테스트**: Postman, Swagger UI
-- **버전 관리**: Git
+- `spring-boot-starter-security` 및 JWT 관련 라이브러리는 제거되었습니다.
+- Swagger 보안 스키마 또한 Bearer 토큰을 요구하지 않습니다.
+- 인증/사용자 테이블이 필요하면 별도 브랜치에서 복구하거나 새 모듈로 추가해주세요.
 
-## 📝 참고 자료
-
-- [온비드 OpenAPI 문서](https://www.data.go.kr/data/15000851/openapi.do)
-- [Spring Boot 공식 문서](https://spring.io/projects/spring-boot)
-- [MyBatis 공식 문서](https://mybatis.org/mybatis-3/)
-- [SpringDoc OpenAPI 문서](https://springdoc.org/)
-
-## 🐛 트러블슈팅
-
-### 1. 데이터베이스 연결 오류
-- MariaDB 서비스가 실행 중인지 확인
-- `application.properties`의 DB 연결 정보 확인
-
-### 2. API 키 관련 오류
-- 환경변수 `ONBID_API_KEY`가 설정되었는지 확인
-- API 키 발급 상태 및 할당량 확인
-
-### 3. JWT 토큰 오류
-- 토큰 만료 시간 확인 (기본 24시간)
-- Authorization 헤더 형식 확인: `Bearer {token}`
-
-## 📄 라이센스
-
-Apache 2.0
-
-## 👥 개발자
-
-Side Project Team
-
----
-
-**주의**: 이 프로젝트는 학습 및 포트폴리오 목적으로 개발되었습니다.

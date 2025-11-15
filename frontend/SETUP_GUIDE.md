@@ -1,227 +1,103 @@
-# 온비드 공매물건 조회 시스템 - 설치 및 실행 가이드
+# 온비드 공매물건 조회 시스템 - 설치 & 실행 가이드
 
-## 🎯 프로젝트 개요
+## 1. 개요
 
-한국자산관리공사 온비드 OpenAPI를 활용하여 공매물건을 조회하고 관리할 수 있는 웹 애플리케이션입니다.
+온비드 OpenAPI에서 공매물건을 조회하고 MariaDB에 저장/관리하는 단일 페이지 애플리케이션입니다.  
+현재 버전은 **회원·JWT·관심물건 UI 없이** 공매 데이터 탐색과 구매 이력 관리에만 집중합니다.
 
-## 📋 사전 요구사항
+## 2. 사전 준비
 
-1. **백엔드 서버 실행 필수**
-   - 백엔드 서버가 `http://localhost:8081`에서 실행 중이어야 합니다
-   - 백엔드 프로젝트의 README를 참고하여 서버를 먼저 실행하세요
+1. **백엔드 실행 (필수)**  
+   - `http://localhost:8081` 에서 Spring Boot 서버가 동작해야 합니다.
+   - 백엔드 README에 따라 ONBID API 키와 DB를 먼저 설정하세요.
+2. **Node.js 18+** 및 npm
 
-2. **Node.js 설치**
-   - Node.js 18 이상 권장
-   - npm 또는 yarn 패키지 매니저
-
-## 🚀 빠른 시작
-
-### 1단계: 의존성 설치
+## 3. 빠른 시작
 
 ```bash
 cd frontend
 npm install
-```
-
-### 2단계: 개발 서버 실행
-
-```bash
 npm run dev
 ```
 
-브라우저에서 `http://localhost:5173` 접속
+브라우저에서 `http://localhost:5173` 접속.  
+빌드/미리보기:
 
-### 3단계: 백엔드 서버 확인
+```bash
+npm run build
+npm run preview
+```
 
-- 백엔드 서버가 `http://localhost:8081`에서 실행 중인지 확인
-- 백엔드가 실행되지 않으면 프론트엔드 기능이 작동하지 않습니다
+## 4. 현재 제공 기능
 
-## 🎨 주요 기능
+| 구분 | 설명 |
+|------|------|
+| 홈 | 프로젝트 안내 및 주요 링크 |
+| 물건 목록 (`/goods`) | 온비드 API 조회, 100건 추출, DB 저장/삭제, 정렬·필터·페이지네이션 |
+| 물건 상세 (`/goods/:historyNo`) | 저장된 물건 정보 + 구매 이력 입력 |
+| 구매 이력 (`/purchases`) | 모든 구매 기록 확인 |
 
-### 1. 회원 관리
-- **회원가입**: `/register` 페이지에서 계정 생성
-  - 이메일, 비밀번호(6자 이상), 사용자명(2자 이상) 입력
-- **로그인**: `/login` 페이지에서 로그인
-  - JWT 토큰이 로컬스토리지에 저장됨
-- **로그아웃**: 헤더의 로그아웃 버튼 클릭
+> 🔐 로그인/회원가입/관심물건 UI는 제거되었습니다. 관련 토글이나 숨김 코드는 존재하지 않습니다.
 
-### 2. 공매물건 조회
-- **홈 페이지** (`/`): 최근 물건 6개 표시
-- **물건 목록** (`/goods`): 
-  - 페이징 처리 (10개씩)
-  - 지역별 필터링
-  - 다음/이전 페이지 이동
-
-### 3. 관심물건 관리 (로그인 필요)
-- **등록**: 물건 카드의 "관심등록" 버튼 클릭
-- **목록**: `/favorites` 페이지에서 확인
-- **삭제**: 관심물건 목록에서 "삭제" 버튼 클릭
-
-## 📁 프로젝트 구조
+## 5. 프로젝트 구조
 
 ```
 frontend/
 ├── src/
-│   ├── components/          # 재사용 컴포넌트
-│   │   ├── Header.jsx      # 상단 메뉴바
-│   │   ├── GoodsCard.jsx   # 물건 카드
-│   │   └── PrivateRoute.jsx # 인증 보호
-│   ├── pages/              # 페이지
-│   │   ├── HomePage.jsx    # 메인
-│   │   ├── ListPage.jsx    # 물건 목록
-│   │   ├── LoginPage.jsx   # 로그인
-│   │   ├── RegisterPage.jsx # 회원가입
-│   │   └── FavoritesPage.jsx # 관심물건
-│   ├── utils/
-│   │   └── api.js          # API 통신
-│   ├── App.jsx             # 메인 앱
-│   ├── main.jsx            # 진입점
-│   └── index.css           # 전역 스타일
-├── tailwind.config.js      # Tailwind 설정
-├── postcss.config.js       # PostCSS 설정
-└── package.json            # 의존성
+│   ├── components/
+│   │   ├── Header.jsx
+│   │   ├── GoodsTable.jsx / GoodsCard.jsx / GoodsMobileCard.jsx
+│   │   └── PurchaseModal.jsx
+│   ├── pages/
+│   │   ├── HomePage.jsx
+│   │   ├── ListPage.jsx
+│   │   ├── GoodsDetailPage.jsx
+│   │   └── PurchasesPage.jsx
+│   ├── utils/api.js
+│   ├── App.jsx
+│   └── main.jsx
+└── package.json, tailwind.config.cjs, postcss.config.cjs
 ```
 
-## 🔧 환경 설정
+## 6. 환경 설정
 
-### 백엔드 API 주소 변경
+- 기본 API URL: `src/utils/api.js`
+  ```javascript
+  const api = axios.create({
+    baseURL: 'http://localhost:8081/api',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  ```
+- 필요한 경우 위 `baseURL` 만 수정하면 됩니다.
 
-`src/utils/api.js` 파일에서 백엔드 서버 주소를 변경할 수 있습니다:
+## 7. 사용 흐름
 
-```javascript
-const api = axios.create({
-  baseURL: 'http://localhost:8081/api',  // 여기를 수정
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-```
+1. **DB 조회**: `/goods` 페이지에서 “DB 조회” 버튼 → 현재 저장된 물건 목록 표시
+2. **API 조회 → 100개 필터링 → DB 저장**  
+   `API 조회` → `100개 조회` → `데이터베이스에 저장`
+3. **구매 등록**: 물건 상세 페이지에서 가격 입력 후 구매 기록 추가
+4. **구매 이력 열람**: `/purchases` 페이지
 
-## 🎯 사용 방법
+## 8. 문제 해결
 
-### 1. 회원가입 및 로그인
+| 증상 | 점검 항목 |
+|------|-----------|
+| API 호출 실패 | 백엔드 실행 여부, 콘솔 네트워크 에러, `api.js` URL 확인 |
+| CORS 오류 | 백엔드 `WebConfig` 의 허용 도메인 확인 |
+| DB 저장 실패 | 백엔드 로그, MariaDB 접속 가능 여부, `schema.sql` 적용 여부 |
 
-1. 우측 상단 "회원가입" 클릭
-2. 이메일, 사용자명, 비밀번호 입력
-3. 회원가입 완료 후 로그인 페이지로 이동
-4. 로그인 후 자동으로 홈으로 이동
-
-### 2. 물건 조회
-
-1. 홈 페이지에서 "전체 물건 보기" 클릭
-2. 지역 필터 선택 (선택사항)
-3. "조회" 버튼 클릭
-4. 페이지 하단에서 페이지 이동
-
-### 3. 관심물건 등록
-
-1. 로그인 필요
-2. 물건 카드에서 "관심등록" 버튼 클릭
-3. 상단 메뉴의 "관심물건"에서 확인 가능
-
-### 4. 관심물건 관리
-
-1. 상단 메뉴의 "관심물건" 클릭
-2. 등록된 관심물건 목록 확인
-3. "삭제" 버튼으로 관심물건 제거
-
-## 📝 개발 명령어
+## 9. 명령어 요약
 
 ```bash
-# 개발 서버 실행
-npm run dev
-
-# 프로덕션 빌드
-npm run build
-
-# 빌드 미리보기
-npm run preview
-
-# 린트 검사
-npm run lint
+npm run dev      # 개발 서버
+npm run build    # 프로덕션 빌드
+npm run preview  # 빌드 미리보기
+npm run lint     # 린트 검사
 ```
 
-## 🐛 문제 해결
+## 10. 참고
 
-### 1. API 호출 실패
-
-**증상**: "물건 정보를 불러오는 중 오류가 발생했습니다"
-
-**해결책**:
-- 백엔드 서버가 실행 중인지 확인
-- 브라우저 콘솔(F12)에서 에러 메시지 확인
-- 백엔드 서버 주소가 올바른지 확인 (`src/utils/api.js`)
-
-### 2. 로그인 후 자동 로그아웃
-
-**증상**: 로그인 직후 다시 로그인 페이지로 이동
-
-**해결책**:
-- 브라우저 로컬스토리지 확인 (F12 > Application > Local Storage)
-- 토큰이 저장되어 있는지 확인
-- 백엔드 JWT 설정 확인
-
-### 3. CORS 오류
-
-**증상**: "Access to XMLHttpRequest blocked by CORS policy"
-
-**해결책**:
-- 백엔드 서버의 CORS 설정 확인
-- `backend/src/main/java/com/onbid/config/WebConfig.java` 확인
-
-### 4. 관심물건 등록 실패
-
-**증상**: "처리 중 오류가 발생했습니다"
-
-**해결책**:
-- 로그인 상태 확인
-- 이미 등록된 물건인지 확인
-- 백엔드 로그 확인
-
-## 🎨 UI/UX 특징
-
-### 디자인
-- **Tailwind CSS**: 유틸리티 기반 스타일링
-- **반응형**: 모바일, 태블릿, 데스크톱 지원
-- **전통적 레이아웃**: 상단 고정 메뉴바
-
-### 색상 체계
-- **Primary**: 파란색 (`blue-600`)
-- **Danger**: 빨간색 (`red-500`)
-- **Success**: 초록색 (`green-500`)
-
-### 컴포넌트
-- **카드**: 그림자 효과, 호버 애니메이션
-- **버튼**: 호버 효과, 로딩 상태
-- **폼**: 포커스 강조, 유효성 검사
-
-## 📊 기술 스택
-
-- **React 19**: 최신 React 기능 활용
-- **Vite**: 빠른 개발 서버 및 빌드
-- **React Router v6**: SPA 라우팅
-- **Axios**: HTTP 클라이언트
-- **Tailwind CSS 4**: 최신 스타일링 프레임워크
-
-## 🔐 보안
-
-- **JWT 인증**: 토큰 기반 인증
-- **자동 토큰 첨부**: Axios 인터셉터
-- **401 처리**: 자동 로그아웃 및 리디렉션
-- **로컬스토리지**: 토큰 저장
-
-## 📱 브라우저 지원
-
-- ✅ Chrome (최신)
-- ✅ Firefox (최신)
-- ✅ Safari (최신)
-- ✅ Edge (최신)
-
-## 🤝 기여
-
-이 프로젝트는 학습 목적으로 작성되었습니다.
-
-## 📞 문의
-
-프로젝트 관련 문의사항은 이슈를 통해 남겨주세요.
+- 더 이상 로컬스토리지에 JWT 토큰을 저장하지 않습니다.
+- Header/컴포넌트에서 `isAuthenticated`, `PrivateRoute`, `FavoritesPage` 등은 완전히 제거되었습니다.
+- 인증 기능을 재도입하려면 별도 브랜치에서 신규 UI/상태를 구축하세요.
 

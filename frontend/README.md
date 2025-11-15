@@ -1,146 +1,68 @@
 # 온비드 공매물건 조회 시스템 - Frontend
 
-React + Vite + Tailwind CSS로 구현된 온비드 공매물건 조회 웹 애플리케이션의 프론트엔드입니다.
+React + Vite + Tailwind CSS로 구성된 공매물건 조회/관리 전용 프런트엔드입니다.  
+2025-11-15 기준으로 **로그인·회원가입·관심물건 UI** 및 관련 토글 코드는 모두 제거되었으며, 현재는 공매 데이터 탐색/DB 동기화/구매 이력 열람에 집중합니다.
 
-## 기술 스택
+## ⚙️ 기술 스택
 
-- **React 19**: UI 라이브러리
-- **Vite**: 빌드 도구
-- **React Router v6**: 클라이언트 사이드 라우팅
-- **Axios**: HTTP 클라이언트
-- **Tailwind CSS**: 유틸리티 기반 CSS 프레임워크
+- React 19 / Vite
+- React Router v6
+- Axios
+- Tailwind CSS
 
-## 프로젝트 구조
+## 📁 디렉터리 개요
 
 ```
 src/
-├── components/          # 재사용 가능한 컴포넌트
-│   ├── Header.jsx      # 상단 네비게이션 바
-│   ├── GoodsCard.jsx   # 물건 정보 카드
-│   └── PrivateRoute.jsx # 인증 보호 라우트
-├── pages/              # 페이지 컴포넌트
-│   ├── HomePage.jsx    # 메인 페이지
-│   ├── ListPage.jsx    # 물건 목록 페이지
-│   ├── LoginPage.jsx   # 로그인 페이지
-│   ├── RegisterPage.jsx # 회원가입 페이지
-│   └── FavoritesPage.jsx # 관심물건 페이지
+├── components/
+│   ├── Header.jsx          # 상단 네비게이션
+│   ├── GoodsTable.jsx      # 데스크톱 테이블 뷰
+│   ├── GoodsCard.jsx       # 카드 뷰
+│   ├── GoodsMobileCard.jsx # 모바일 카드
+│   └── PurchaseModal.jsx   # 구매 입력 모달
+├── pages/
+│   ├── HomePage.jsx
+│   ├── ListPage.jsx        # 조회/저장/필터링 핵심 페이지
+│   ├── GoodsDetailPage.jsx
+│   └── PurchasesPage.jsx
 ├── utils/
-│   └── api.js          # API 통신 유틸리티
-├── App.jsx             # 메인 앱 컴포넌트
-└── main.jsx            # 앱 진입점
+│   └── api.js              # 공매/구매 REST API 호출
+├── App.jsx
+└── main.jsx
 ```
 
-## 주요 기능
+## ✨ 주요 화면
 
-### 1. 사용자 인증
-- 회원가입
-- 로그인/로그아웃
-- JWT 토큰 기반 인증
+- **홈**: 프로젝트 소개 및 주요 기능 요약
+- **물건 목록**: 온비드 API 연동, 100건 필터링, DB 저장/삭제, 검색·정렬·페이지네이션
+- **물건 상세**: 선택한 물건의 세부 정보와 구매 기록 관리
+- **구매 이력**: 저장된 모든 구매 내역 조회
 
-### 2. 공매물건 조회
-- 최근 물건 조회
-- 물건 목록 페이징
-- 지역별 필터링
-
-### 3. 관심물건 관리
-- 관심물건 등록
-- 관심물건 목록 조회
-- 관심물건 삭제
-
-## 설치 및 실행
-
-### 1. 의존성 설치
+## 🚀 사용 방법
 
 ```bash
 npm install
-```
-
-### 2. 개발 서버 실행
-
-```bash
 npm run dev
 ```
 
-개발 서버가 실행되면 브라우저에서 `http://localhost:5173`으로 접속할 수 있습니다.
+브라우저에서 `http://localhost:5173` 접속.  
+프로덕션 빌드는 `npm run build`, 빌드 결과는 `dist/`.
 
-### 3. 프로덕션 빌드
+## 🔌 백엔드 연동
 
-```bash
-npm run build
-```
+- 기본 API 베이스 URL은 `src/utils/api.js` 에서 `http://localhost:8081/api` 로 설정되어 있습니다.
+- 현재 제공되는 유틸 함수는 공매물건(`getGoodsList`, `getGoodsFromDB`, `saveGoodsToDB`, `deleteAllGoods`, `getGoodsDetail`)과 구매(`createPurchase`, `getPurchasesByHistoryNo`, `getAllPurchases`) 호출만 포함합니다.
 
-빌드된 파일은 `dist` 폴더에 생성됩니다.
+## 🧭 라우팅
 
-### 4. 프로덕션 미리보기
+- `/` – 홈
+- `/goods` – 공매물건 목록/필터
+- `/goods/:historyNo` – 물건 상세
+- `/purchases` – 구매 이력
 
-```bash
-npm run preview
-```
+## 📝 개발 메모
 
-## 환경 설정
+- 더 이상 JWT 토큰이나 로컬스토리지 기반 인증 상태를 확인하지 않습니다.
+- Header, Goods 컴포넌트, API 유틸에서 관련 토글/헬퍼가 모두 제거되었습니다.
+- 인증 기능을 재도입하려면 별도 브랜치에서 새 UI/상태를 설계하세요.
 
-백엔드 API 서버 주소는 `src/utils/api.js`에서 설정할 수 있습니다.
-
-```javascript
-const api = axios.create({
-  baseURL: 'http://localhost:8081/api',  // 백엔드 서버 주소
-  // ...
-});
-```
-
-## API 엔드포인트
-
-### 사용자
-- `POST /api/users/register` - 회원가입
-- `POST /api/users/login` - 로그인
-- `GET /api/users/me` - 내 정보 조회
-
-### 공매물건
-- `GET /api/goods` - 물건 목록 조회
-- `GET /api/goods/items` - 물건 목록 간단 조회
-
-### 관심물건
-- `GET /api/favorites` - 관심물건 목록
-- `POST /api/favorites` - 관심물건 등록
-- `DELETE /api/favorites/{id}` - 관심물건 삭제
-- `GET /api/favorites/check/{goodsNo}` - 관심물건 여부 확인
-
-## 페이지 라우팅
-
-- `/` - 홈 페이지
-- `/goods` - 물건 목록
-- `/login` - 로그인
-- `/register` - 회원가입
-- `/favorites` - 관심물건 (로그인 필요)
-
-## 개발 가이드
-
-### 새 페이지 추가
-
-1. `src/pages/` 디렉토리에 페이지 컴포넌트 생성
-2. `src/App.jsx`에 라우트 추가
-
-### API 함수 추가
-
-`src/utils/api.js`에 새로운 API 호출 함수를 추가합니다.
-
-### 스타일링
-
-Tailwind CSS 유틸리티 클래스를 사용하여 스타일링합니다.
-
-```jsx
-<button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-  버튼
-</button>
-```
-
-## 브라우저 지원
-
-- Chrome (최신 버전)
-- Firefox (최신 버전)
-- Safari (최신 버전)
-- Edge (최신 버전)
-
-## 라이선스
-
-이 프로젝트는 개인 학습 목적으로 작성되었습니다.
