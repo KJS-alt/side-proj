@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import GoodsTable from '../components/GoodsTable';
 import GoodsMobileCard from '../components/GoodsMobileCard';
-import { getGoodsList, getGoodsFromDB, saveGoodsToDB, deleteAllGoods } from '../utils/api';
+import { getGoodsList, getGoodsFromDB, saveGoodsToDB, deleteAllGoods, getRefreshStatus } from '../utils/api';
 
 /**
  * ListPage 컴포넌트 - 물건 목록 페이지 (표 형식)
@@ -25,6 +25,26 @@ function ListPage() {
   const [apiData, setApiData] = useState([]); // API에서 조회한 원본 데이터
   const [filteredData, setFilteredData] = useState([]); // 100개 필터링한 데이터
 
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
+  const [showRefreshBanner, setShowRefreshBanner] = useState(false);
+  const bannerTimeoutRef = useRef(null);
+
+  // 동기화 시각 포맷터 (한국어 표기)
+  const formatSyncTime = (value) => {
+    if (!value) return '동기화 대기중';
+    try {
+      return new Date(value).toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch {
+      return value;
+    }
+  };
   // 필터 상태 (DB 저장 필드에 맞게)
   const [filters, setFilters] = useState({
     goodsName: '',        // 물건명
@@ -63,6 +83,50 @@ function ListPage() {
     // 최대 100개로 제한
     return filtered.slice(0, 100);
   };
+
+  const triggerRefreshBanner = useCallback(() => {
+    setShowRefreshBanner(true);
+    if (bannerTimeoutRef.current) {
+      clearTimeout(bannerTimeoutRef.current);
+    }
+    bannerTimeoutRef.current = setTimeout(() => setShowRefreshBanner(false), 3000);
+  }, []);
+
+  // 백엔드에서 동기화 상태를 받아와 마지막 갱신 시각과 배너를 업데이트
+  const fetchRefreshStatus = useCallback(async () => {
+    try {
+      const response = await getRefreshStatus();
+      if (response?.success) {
+        const latestSynced = response.lastSyncedAt || null;
+        setLastSyncedAt(prev => {
+          if (latestSynced && latestSynced !== prev) {
+            triggerRefreshBanner();
+          }
+          return latestSynced;
+        });
+      }
+    } catch (err) {
+      console.error('갱신 상태 조회 실패:', err);
+    }
+  }, [triggerRefreshBanner]);
+
+  // 초기 진입 시 상태 조회 + 배너 타이머 정리
+  useEffect(() => {
+    fetchRefreshStatus();
+    return () => {
+      if (bannerTimeoutRef.current) {
+        clearTimeout(bannerTimeoutRef.current);
+      }
+    };
+  }, [fetchRefreshStatus]);
+
+  // 10초마다 상태를 재조회하여 마지막 갱신 시각을 최신으로 유지
+  useEffect(() => {
+    const statusPoller = setInterval(() => {
+      fetchRefreshStatus();
+    }, 10000);
+    return () => clearInterval(statusPoller);
+  }, [fetchRefreshStatus]);
 
   // API 조회 버튼
   const handleApiQuery = async () => {
@@ -134,6 +198,7 @@ function ListPage() {
         alert(`${response.savedCount}개의 물건이 저장되었습니다.`);
         // DB 조회로 전환
         handleDBQuery();
+        fetchRefreshStatus();
       } else {
         alert('저장 실패: ' + response.message);
       }
@@ -343,6 +408,18 @@ function ListPage() {
         >
           {showFilters ? '필터 숨기기' : '필터 보기'}
         </button>
+      </div>
+
+      {showRefreshBanner && (
+        <div className="mb-4 bg-green-100 border border-green-200 text-green-800 px-4 py-2 rounded">
+          데이터베이스 갱신이 완료되었습니다.
+        </div>
+      )}
+
+      <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <span className="text-sm text-gray-600">
+          마지막 갱신: {formatSyncTime(lastSyncedAt)}
+        </span>
       </div>
 
       {/* 버튼 그룹 */}

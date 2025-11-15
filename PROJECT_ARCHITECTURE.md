@@ -135,15 +135,22 @@ src/
 
 ## 8. 데이터베이스
 
-### goods
+### goods_basic
 ```
-history_no (UNIQUE), goods_name, min_bid_price, appraisal_price,
-bid_close_date, address, created_at, updated_at
+history_no (UNIQUE), goods_name, status_name, sale_type_name,
+category_name, bid_start_date, bid_close_date, address,
+created_at, updated_at
+```
+
+### goods_price
+```
+history_no (FK → goods_basic.history_no), min_bid_price, appraisal_price,
+fee_rate, inquiry_count, favorite_count, updated_at
 ```
 
 ### purchases
 ```
-id, history_no (FK → goods.history_no), purchase_price,
+id, history_no (FK → goods_basic.history_no), purchase_price,
 purchase_status (기본 COMPLETED), created_at
 ```
 

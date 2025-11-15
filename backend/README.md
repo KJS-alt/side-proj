@@ -8,7 +8,7 @@
 - **구성**: Spring Boot 백엔드 + React 프런트엔드(별도 디렉터리)
 - **핵심 기능**
   - 온비드 공매물건 실시간 조회 및 필터링
-  - 100건 샘플 추출 후 MariaDB에 일괄 저장/삭제
+  - 1분마다 최신 100건 자동 동기화 (스케줄러)
   - 저장된 물건을 기준으로 구매 이력 기록/조회
   - Swagger UI 기반 API 테스트
 
@@ -72,6 +72,7 @@
 | GET | `/api/goods/db/{historyNo}` | 특정 물건 상세 |
 | POST | `/api/goods/db/batch` | 물건 목록 일괄 저장 |
 | DELETE | `/api/goods/db/all` | DB 전체 삭제 |
+| GET | `/api/goods/refresh-status` | 최근/다음 동기화 상태 |
 
 ### 2. 매매 API (`/api/purchases`)
 
@@ -80,6 +81,7 @@
 | POST | `/api/purchases` | 구매 생성 |
 | GET | `/api/purchases` | 전체 구매 이력 |
 | GET | `/api/purchases/{historyNo}` | 특정 물건의 구매 이력 |
+| DELETE | `/api/purchases/reset` | 구매 이력 전체 삭제 |
 
 ## 📁 디렉터리 구조
 
@@ -110,15 +112,19 @@ backend/src/main/java/com/onbid/
 
 ## 🗄️ 데이터베이스 개요
 
-`schema.sql` 에 정의된 현재 테이블은 두 개뿐입니다.
+`schema.sql` 에 정의된 테이블
 
-1. **goods**
-   - `history_no`, `goods_name`, `min_bid_price`, `appraisal_price`, `bid_close_date`, `address` 등 핵심 열만 보관
-   - 조회/정렬 인덱스: `history_no`, `bid_close_date`
+1. **goods_basic**  
+   - 공매 메타정보(`history_no`, `goods_name`, `status_name`, `bid_start_date`, `bid_close_date`, `address` 등) 저장  
+   - `history_no` UNIQUE, 조회 인덱스: `history_no`, `bid_close_date`
 
-2. **purchases**
-   - `history_no`, `purchase_price`, `purchase_status`, `created_at`
-   - `history_no`는 `goods(history_no)`를 참조하며 `ON DELETE CASCADE`
+2. **goods_price**  
+   - 가격/통계 정보(`min_bid_price`, `appraisal_price`, `fee_rate`, `inquiry_count`, `favorite_count`) 저장  
+   - `history_no` 로 `goods_basic` 를 참조하며 `ON DELETE CASCADE`
+
+3. **purchases**  
+   - 구매 이력(`purchase_price`, `purchase_status`, `created_at`)  
+   - `history_no` 가 `goods_basic(history_no)` 를 참조 (삭제 시 자동 제거하지 않음)
 
 ## ⚙️ 주요 설정 (application.properties)
 

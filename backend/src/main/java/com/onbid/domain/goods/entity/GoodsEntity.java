@@ -33,14 +33,24 @@ public class GoodsEntity {
     private String goodsName;
     
     /**
-     * 최저입찰가
+     * 물건상태
      */
-    private Long minBidPrice;
+    private String statusName;
     
     /**
-     * 감정가 (평가액)
+     * 처분방식명
      */
-    private Long appraisalPrice;
+    private String saleTypeName;
+    
+    /**
+     * 카테고리명
+     */
+    private String categoryName;
+    
+    /**
+     * 입찰시작일시
+     */
+    private String bidStartDate;
     
     /**
      * 입찰마감일시 (YYYYMMDDHHmmss)
@@ -51,6 +61,31 @@ public class GoodsEntity {
      * 물건소재지
      */
     private String address;
+    
+    /**
+     * 최저입찰가
+     */
+    private Long minBidPrice;
+    
+    /**
+     * 감정가 (평가액)
+     */
+    private Long appraisalPrice;
+    
+    /**
+     * 최저입찰가율
+     */
+    private String feeRate;
+    
+    /**
+     * 조회수
+     */
+    private Integer inquiryCount;
+    
+    /**
+     * 관심수
+     */
+    private Integer favoriteCount;
     
     /**
      * 생성일시

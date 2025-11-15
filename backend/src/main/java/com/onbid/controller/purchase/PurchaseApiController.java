@@ -47,6 +47,12 @@ public class PurchaseApiController {
             response.put("message", "구매가 완료되었습니다.");
             
             return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.warn("구매 생성 실패(검증) - {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             log.error("구매 생성 실패", e);
             
@@ -112,6 +118,29 @@ public class PurchaseApiController {
             response.put("success", false);
             response.put("message", "구매 이력 조회 실패: " + e.getMessage());
             
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * 전체 구매 이력 초기화
+     */
+    @DeleteMapping("/reset")
+    @Operation(summary = "구매 이력 초기화", description = "저장된 모든 구매 데이터를 삭제합니다")
+    public ResponseEntity<Map<String, Object>> resetPurchases() {
+        log.warn("구매 이력 초기화 API 호출");
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            int deleted = purchaseService.resetAllPurchases();
+            response.put("success", true);
+            response.put("deletedCount", deleted);
+            response.put("message", deleted + "개의 구매 이력이 삭제되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("구매 이력 초기화 실패", e);
+            response.put("success", false);
+            response.put("message", "구매 이력 초기화 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }

@@ -46,5 +46,18 @@ public interface PurchaseMapper {
             "FROM purchases ORDER BY created_at DESC")
     @ResultMap("purchaseResultMap")
     List<Purchase> findAll();
+
+    /**
+     * 구매 데이터 초기화
+     * @return 삭제된 행 수
+     */
+    @Delete("DELETE FROM purchases")
+    int deleteAll();
+
+    /**
+     * 특정 물건이 이미 구매되었는지 개수 반환
+     */
+    @Select("SELECT COUNT(*) FROM purchases WHERE history_no = #{historyNo}")
+    int countByHistoryNo(Long historyNo);
 }
 

@@ -100,6 +100,14 @@ export const deleteAllGoods = async () => {
   return response.data;
 };
 
+/**
+ * 동기화 상태 조회
+ */
+export const getRefreshStatus = async () => {
+  const response = await api.get('/goods/refresh-status');
+  return response.data;
+};
+
 // ========== 구매 API ==========
 
 /**
@@ -132,6 +140,15 @@ export const getPurchasesByHistoryNo = async (historyNo) => {
  */
 export const getAllPurchases = async () => {
   const response = await api.get('/purchases');
+  return response.data;
+};
+
+/**
+ * 구매 목록 초기화
+ * @returns {Promise} 초기화 결과
+ */
+export const resetPurchases = async () => {
+  const response = await api.delete('/purchases/reset');
   return response.data;
 };
 

@@ -1,14 +1,16 @@
 package com.onbid.service.goods;
 
 import com.onbid.domain.goods.dto.Goods;
+import com.onbid.domain.goods.entity.GoodsBasicEntity;
 import com.onbid.domain.goods.entity.GoodsEntity;
+import com.onbid.domain.goods.entity.GoodsPriceEntity;
 import com.onbid.mapper.goods.GoodsMapper;
+import com.onbid.mapper.purchase.PurchaseMapper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * 물건 서비스
@@ -20,6 +22,7 @@ import java.util.List;
 public class GoodsService {
     
     private final GoodsMapper goodsMapper;
+    private final PurchaseMapper purchaseMapper;
     
     /**
      * DB에서 전체 물건 조회
@@ -47,44 +50,32 @@ public class GoodsService {
      */
     @Transactional
     public int saveGoodsListToDB(List<Goods> goods) {
-        log.info("=== 물건 데이터 저장 시작 ===");
-        
-        try {
-            // 기존 데이터 삭제
-            int deletedCount = goodsMapper.deleteAll();
-            log.info("기존 물건 데이터 {}개 삭제", deletedCount);
-            
-            if (goods == null || goods.isEmpty()) {
-                log.warn("저장할 물건이 없습니다.");
-                return 0;
-            }
-            
-            // DB에 저장
-            int savedCount = 0;
-            for (Goods item : goods) {
-                // historyNo가 없는 경우 건너뛰기
-                if (item.getHistoryNo() == null) {
-                    log.warn("물건이력번호가 없어 건너뜁니다: {}", item.getGoodsName());
-                    continue;
-                }
-                
-                try {
-                    GoodsEntity entity = convertToEntity(item);
-                    goodsMapper.insert(entity);
-                    savedCount++;
-                } catch (Exception e) {
-                    log.error("물건 저장 실패 - historyNo: {}, 오류: {}", 
-                            item.getHistoryNo(), e.getMessage());
-                }
-            }
-            
-            log.info("=== 물건 데이터 저장 완료: {}개 저장 ===", savedCount);
-            return savedCount;
-            
-        } catch (Exception e) {
-            log.error("물건 데이터 저장 실패", e);
-            throw new RuntimeException("물건 데이터 저장 실패: " + e.getMessage(), e);
+        log.info("=== 물건 데이터 동기화 시작 ===");
+
+        if (goods == null || goods.isEmpty()) {
+            log.warn("저장할 물건이 없습니다.");
+            return 0;
         }
+
+        int syncedCount = 0;
+        for (Goods item : goods) {
+            if (item.getHistoryNo() == null) {
+                log.warn("물건이력번호가 없어 건너뜁니다: {}", item.getGoodsName());
+                continue;
+            }
+
+            try {
+                goodsMapper.upsertBasic(convertToBasicEntity(item));
+                goodsMapper.upsertPrice(convertToPriceEntity(item));
+                syncedCount++;
+            } catch (Exception e) {
+                log.error("물건 동기화 실패 - historyNo: {}, 오류: {}",
+                        item.getHistoryNo(), e.getMessage());
+            }
+        }
+
+        log.info("=== 물건 데이터 동기화 완료: {}개 반영 ===", syncedCount);
+        return syncedCount;
     }
     
     /**
@@ -96,27 +87,38 @@ public class GoodsService {
         log.info("=== 모든 물건 데이터 삭제 ===");
         
         try {
-            int deletedCount = goodsMapper.deleteAll();
-            log.info("{}개의 물건 데이터 삭제 완료", deletedCount);
-            return deletedCount;
+            purchaseMapper.deleteAll();
+            goodsMapper.deleteAllPrices();
+            int deletedBasic = goodsMapper.deleteAllBasics();
+            log.info("기본 정보 {}개 삭제 완료", deletedBasic);
+            return deletedBasic;
         } catch (Exception e) {
             log.error("물건 데이터 삭제 실패", e);
             throw new RuntimeException("물건 데이터 삭제 실패: " + e.getMessage(), e);
         }
     }
-    
-    /**
-     * API 응답(Goods)을 DB 엔티티(GoodsEntity)로 변환
-     * 매매에 필수적인 정보만 저장
-     */
-    private GoodsEntity convertToEntity(Goods goods) {
-        return GoodsEntity.builder()
+
+    private GoodsBasicEntity convertToBasicEntity(Goods goods) {
+        return GoodsBasicEntity.builder()
                 .historyNo(goods.getHistoryNo())
                 .goodsName(goods.getGoodsName())
-                .minBidPrice(goods.getMinBidPrice())
-                .appraisalPrice(goods.getAppraisalPrice())
+                .statusName(goods.getStatusName())
+                .saleTypeName(goods.getSaleTypeName())
+                .categoryName(goods.getCategoryName())
+                .bidStartDate(goods.getBidStartDate())
                 .bidCloseDate(goods.getBidCloseDate())
                 .address(goods.getAddress())
+                .build();
+    }
+
+    private GoodsPriceEntity convertToPriceEntity(Goods goods) {
+        return GoodsPriceEntity.builder()
+                .historyNo(goods.getHistoryNo())
+                .minBidPrice(goods.getMinBidPrice())
+                .appraisalPrice(goods.getAppraisalPrice())
+                .feeRate(goods.getFeeRate())
+                .inquiryCount(goods.getInquiryCount())
+                .favoriteCount(goods.getFavoriteCount())
                 .build();
     }
 }

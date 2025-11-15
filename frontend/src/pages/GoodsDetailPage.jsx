@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getGoodsDetail, createPurchase } from '../utils/api';
+import { getGoodsDetail, createPurchase, getPurchasesByHistoryNo } from '../utils/api';
 import PurchaseModal from '../components/PurchaseModal';
 
 /**
@@ -15,6 +15,7 @@ function GoodsDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [isAlreadyPurchased, setIsAlreadyPurchased] = useState(false);
 
   // 물건 상세 정보 조회
   useEffect(() => {
@@ -39,6 +40,23 @@ function GoodsDetailPage() {
     fetchGoodsDetail();
   }, [historyNo]);
 
+  useEffect(() => {
+    const fetchPurchaseStatus = async () => {
+      if (!historyNo) return;
+      try {
+        const response = await getPurchasesByHistoryNo(historyNo);
+        if (response.success && Array.isArray(response.items)) {
+          setIsAlreadyPurchased(response.items.length > 0);
+        } else {
+          setIsAlreadyPurchased(false);
+        }
+      } catch (err) {
+        console.error('구매 상태 조회 오류:', err);
+      }
+    };
+    fetchPurchaseStatus();
+  }, [historyNo]);
+
   // 가격 포맷 (천단위 콤마)
   const formatPrice = (price) => {
     if (!price) return '0';
@@ -47,6 +65,7 @@ function GoodsDetailPage() {
 
   // 구매하기 버튼 클릭
   const handlePurchaseClick = () => {
+    if (isAlreadyPurchased) return;
     setIsPurchaseModalOpen(true);
   };
 
@@ -58,10 +77,14 @@ function GoodsDetailPage() {
       if (response.success) {
         alert('구매가 완료되었습니다!');
         setIsPurchaseModalOpen(false);
+        setIsAlreadyPurchased(true);
         // 홈으로 이동
         navigate('/');
       } else {
-        alert('구매에 실패했습니다: ' + response.message);
+        alert('구매에 실패했습니다: ' + (response.message || ''));
+        if (response.message && response.message.includes('이미 구매')) {
+          setIsAlreadyPurchased(true);
+        }
       }
     } catch (err) {
       console.error('구매 오류:', err);
@@ -166,12 +189,19 @@ function GoodsDetailPage() {
         <div className="border-t pt-6">
           <button
             onClick={handlePurchaseClick}
-            className="w-full py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg"
+            disabled={isAlreadyPurchased}
+            className={`w-full py-4 text-lg font-semibold rounded-lg transition shadow-lg ${
+              isAlreadyPurchased
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
-            구매하기
+            {isAlreadyPurchased ? '이미 구매한 물건입니다' : '구매하기'}
           </button>
           <p className="text-sm text-gray-500 text-center mt-3">
-            최저입찰가로 구매가 진행됩니다
+            {isAlreadyPurchased
+              ? '이미 구매한 물건은 다시 구매할 수 없습니다.'
+              : '최저입찰가로 구매가 진행됩니다'}
           </p>
         </div>
       </div>

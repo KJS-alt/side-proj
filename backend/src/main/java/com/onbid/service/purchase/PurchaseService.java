@@ -30,6 +30,14 @@ public class PurchaseService {
     public Purchase createPurchase(PurchaseRequest request) {
         log.info("구매 생성 - historyNo: {}, price: {}", 
                 request.getHistoryNo(), request.getPurchasePrice());
+
+        if (request.getHistoryNo() == null || request.getPurchasePrice() == null) {
+            throw new IllegalArgumentException("historyNo와 purchasePrice는 필수입니다.");
+        }
+
+        if (purchaseMapper.countByHistoryNo(request.getHistoryNo()) > 0) {
+            throw new IllegalStateException("이미 구매한 물건입니다.");
+        }
         
         // Purchase 엔티티 생성
         Purchase purchase = Purchase.builder()
@@ -62,6 +70,16 @@ public class PurchaseService {
     public List<Purchase> getAllPurchases() {
         log.info("전체 구매 이력 조회");
         return purchaseMapper.findAll();
+    }
+
+    /**
+     * 전체 구매 이력 초기화
+     * @return 삭제된 데이터 수
+     */
+    @Transactional
+    public int resetAllPurchases() {
+        log.warn("구매 이력 전체 삭제 요청 처리");
+        return purchaseMapper.deleteAll();
     }
 }
 

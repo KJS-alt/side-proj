@@ -4,6 +4,7 @@ import com.onbid.domain.goods.dto.Goods;
 import com.onbid.domain.goods.entity.GoodsEntity;
 import com.onbid.domain.goods.dto.GoodsResponse;
 import com.onbid.service.goods.GoodsService;
+import com.onbid.service.goods.GoodsSyncStatusService;
 import com.onbid.service.external.OnbidApiService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +30,7 @@ public class GoodsApiController {
     
     private final OnbidApiService onbidApiService;
     private final GoodsService goodsService;
+    private final GoodsSyncStatusService goodsSyncStatusService;
     
     /**
      * 물건 목록 조회 (기본)
@@ -251,6 +253,20 @@ public class GoodsApiController {
             
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    /**
+     * 동기화 상태 조회
+     */
+    @GetMapping("/refresh-status")
+    @Operation(summary = "동기화 상태 조회", description = "최근 동기화시각과 다음 동기화까지 남은 시간을 반환합니다")
+    public ResponseEntity<Map<String, Object>> getRefreshStatus() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("lastSyncedAt", goodsSyncStatusService.getLastSyncedAt());
+        response.put("nextSyncAt", goodsSyncStatusService.getNextSyncAt());
+        response.put("secondsUntilNextSync", goodsSyncStatusService.getSecondsUntilNextSync());
+        return ResponseEntity.ok(response);
     }
 }
 

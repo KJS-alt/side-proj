@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getAllPurchases } from '../utils/api';
+import { useState, useEffect, useCallback } from 'react';
+import { getAllPurchases, resetPurchases } from '../utils/api';
 import { Link } from 'react-router-dom';
 
 /**
@@ -11,30 +11,56 @@ function PurchasesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // 구매 목록 조회
-  useEffect(() => {
-    const fetchPurchases = async () => {
-      setIsLoading(true);
-      setError('');
-      
-      try {
-        const response = await getAllPurchases();
-        
-        if (response.success && response.items) {
-          setPurchases(response.items);
-        } else {
-          setError('구매 목록을 불러올 수 없습니다.');
-        }
-      } catch (err) {
-        console.error('구매 목록 조회 오류:', err);
-        setError('구매 목록을 불러오는 중 오류가 발생했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // 구매 목록 조회 함수 (재사용)
+  const loadPurchases = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
 
-    fetchPurchases();
+    try {
+      const response = await getAllPurchases();
+
+      if (response.success && response.items) {
+        setPurchases(response.items);
+      } else {
+        setError('구매 목록을 불러올 수 없습니다.');
+      }
+    } catch (err) {
+      console.error('구매 목록 조회 오류:', err);
+      setError('구매 목록을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  // 초기 렌더링 시 구매 목록 조회
+  useEffect(() => {
+    loadPurchases();
+  }, [loadPurchases]);
+
+  // 구매 목록 초기화 핸들러
+  const handleResetPurchases = async () => {
+    if (!confirm('정말로 모든 구매 데이터를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await resetPurchases();
+
+      if (response.success) {
+        alert(response.message || '구매 목록이 초기화되었습니다.');
+        await loadPurchases();
+      } else {
+        alert('구매 목록 초기화에 실패했습니다: ' + (response.message || ''));
+      }
+    } catch (err) {
+      console.error('구매 초기화 오류:', err);
+      alert('구매 목록 초기화 중 오류가 발생했습니다.');
+      setIsLoading(false);
+    }
+  };
 
   // 가격 포맷 (천단위 콤마)
   const formatNumber = (num) => {
@@ -90,9 +116,18 @@ function PurchasesPage() {
   return (
     <div>
       {/* 타이틀 */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">구매 목록</h1>
-        <p className="text-gray-600 mt-2">구매한 물건 내역을 확인할 수 있습니다.</p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">구매 목록</h1>
+          <p className="text-gray-600 mt-2">구매한 물건 내역을 확인할 수 있습니다.</p>
+        </div>
+        <button
+          onClick={handleResetPurchases}
+          disabled={isLoading}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          구매 목록 초기화
+        </button>
       </div>
 
       {/* 로딩 상태 */}
@@ -115,7 +150,7 @@ function PurchasesPage() {
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-600 text-lg">구매한 물건이 없습니다.</p>
           <Link
-            to="/list"
+            to="/goods" // 물건 목록 라우트로 이동해 재구매 유도
             className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             물건 목록 보기
@@ -179,6 +214,7 @@ function PurchasesPage() {
                       >
                         상세보기
                       </Link>
+                    <div className="text-xs text-gray-400 mt-1">재구매 불가</div>
                     </td>
                   </tr>
                 ))}
@@ -218,6 +254,7 @@ function PurchasesPage() {
                 >
                   상세보기
                 </Link>
+                <p className="text-xs text-gray-400 text-center mt-2">이미 구매한 물건입니다</p>
               </div>
             ))}
           </div>
