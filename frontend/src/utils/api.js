@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// axios 인스턴스 생성
+const resolvedBaseURL = 'http://localhost:8081/api';
+
+// axios 인스턴스를 생성해 모든 API 호출이 동일한 경로 설정을 재사용하도록 구성합니다.
 const api = axios.create({
-  baseURL: 'http://localhost:8081/api',
+  baseURL: resolvedBaseURL,
   headers: {
     'Content-Type': 'application/json',
   },

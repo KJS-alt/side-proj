@@ -59,6 +59,31 @@
    - http://localhost:8081/swagger-ui.html
    - http://localhost:8081/v3/api-docs
 
+## 💻 프런트엔드 동작 모드 (분리/내장)
+
+React 클라이언트는 `frontend` 디렉터리에서 개발하지만, 시연 시에는 Spring Boot `static` 폴더에 빌드 결과를 복사해 단일 포트로 서비스할 수 있습니다.
+
+### 1) 개발 모드 (React 별도 서버)
+
+1. `cd frontend`
+2. 필요에 따라 `env.example` 또는 `env.development` 내용을 `.env` 로 복사  
+   ```powershell
+   copy env.development .env
+   ```
+3. `npm install && npm run dev`
+4. 백엔드를 `./gradlew bootRun` 으로 실행
+5. `.env` 의 `VITE_API_BASE_URL` 값을 `http://localhost:8081/api` 로 두면 기존과 동일하게 호출됩니다. (다른 값은 `frontend/src/utils/api.js` 상단 주석 참고)
+
+### 2) 시연 모드 (Spring Boot 내장)
+
+1. `cd frontend`
+2. `.env` 에 `VITE_API_BASE_URL=/api` 설정 (`env.production` 참고)
+3. `npm run build:embed` 실행  
+   - `scripts/embed-static.mjs` 가 `vite build` → `backend/src/main/resources/static` 정리 → `dist` 복사를 자동 처리합니다.
+4. 백엔드만 실행하면 `http://localhost:8081` 에서 React + API 를 동시에 확인할 수 있습니다.
+
+> 📌 **SPA 라우팅**: `SpaRedirectConfig` 가 정적 파일이 존재하지 않을 때 `index.html` 로 포워딩하므로 `/goods`, `/purchases` 등을 새로고침해도 404 가 발생하지 않습니다.
+
 ## 📡 주요 API
 
 ### 1. 공매물건 API (`/api/goods`)
