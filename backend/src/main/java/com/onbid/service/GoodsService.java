@@ -1,11 +1,11 @@
-package com.onbid.service.goods;
+package com.onbid.service;
 
-import com.onbid.domain.goods.dto.Goods;
-import com.onbid.domain.goods.entity.GoodsBasicEntity;
-import com.onbid.domain.goods.entity.GoodsEntity;
-import com.onbid.domain.goods.entity.GoodsPriceEntity;
-import com.onbid.mapper.goods.GoodsMapper;
-import com.onbid.mapper.purchase.PurchaseMapper;
+import com.onbid.domain.dto.Goods;
+import com.onbid.domain.entity.GoodsBasicEntity;
+import com.onbid.domain.entity.GoodsEntity;
+import com.onbid.domain.entity.GoodsPriceEntity;
+import com.onbid.mapper.GoodsMapper;
+import com.onbid.mapper.PurchaseMapper;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

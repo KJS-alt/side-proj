@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS purchases;
 DROP TABLE IF EXISTS goods_price;
 DROP TABLE IF EXISTS goods_basic;
 
+
 -- 2. 공매 기본 정보
 CREATE TABLE goods_basic (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '기본 ID',

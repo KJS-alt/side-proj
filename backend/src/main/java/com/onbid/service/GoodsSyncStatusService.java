@@ -1,4 +1,4 @@
-package com.onbid.service.goods;
+package com.onbid.service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package com.onbid.domain.purchase.entity;
+package com.onbid.domain.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

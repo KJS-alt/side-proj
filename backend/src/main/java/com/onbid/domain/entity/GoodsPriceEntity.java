@@ -1,4 +1,4 @@
-package com.onbid.domain.goods.entity;
+package com.onbid.domain.entity;
 
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;

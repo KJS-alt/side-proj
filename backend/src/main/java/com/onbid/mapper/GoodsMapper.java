@@ -1,8 +1,8 @@
-package com.onbid.mapper.goods;
+package com.onbid.mapper;
 
-import com.onbid.domain.goods.entity.GoodsBasicEntity;
-import com.onbid.domain.goods.entity.GoodsEntity;
-import com.onbid.domain.goods.entity.GoodsPriceEntity;
+import com.onbid.domain.entity.GoodsBasicEntity;
+import com.onbid.domain.entity.GoodsEntity;
+import com.onbid.domain.entity.GoodsPriceEntity;
 import java.util.List;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;

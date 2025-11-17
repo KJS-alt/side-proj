@@ -1,7 +1,7 @@
-package com.onbid.service.goods;
+package com.onbid.service;
 
-import com.onbid.domain.goods.dto.Goods;
-import com.onbid.service.external.OnbidApiService;
+import com.onbid.domain.dto.Goods;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

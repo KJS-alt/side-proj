@@ -1,6 +1,6 @@
-package com.onbid.mapper.purchase;
+package com.onbid.mapper;
 
-import com.onbid.domain.purchase.entity.Purchase;
+import com.onbid.domain.entity.Purchase;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

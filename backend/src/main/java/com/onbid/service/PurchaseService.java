@@ -1,8 +1,8 @@
-package com.onbid.service.purchase;
+package com.onbid.service;
 
-import com.onbid.domain.purchase.entity.Purchase;
-import com.onbid.domain.purchase.dto.PurchaseRequest;
-import com.onbid.mapper.purchase.PurchaseMapper;
+import com.onbid.domain.entity.Purchase;
+import com.onbid.domain.dto.Request.PurchaseRequest;
+import com.onbid.mapper.PurchaseMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

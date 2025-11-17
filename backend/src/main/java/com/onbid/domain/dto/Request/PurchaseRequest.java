@@ -1,4 +1,4 @@
-package com.onbid.domain.purchase.dto;
+package com.onbid.domain.dto.Request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

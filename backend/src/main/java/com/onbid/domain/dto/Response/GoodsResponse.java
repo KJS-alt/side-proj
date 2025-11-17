@@ -1,6 +1,7 @@
-package com.onbid.domain.goods.dto;
+package com.onbid.domain.dto.Response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.onbid.domain.dto.Goods;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;

@@ -1,7 +1,7 @@
-package com.onbid.service.external;
+package com.onbid.service;
 
-import com.onbid.domain.goods.dto.Goods;
-import com.onbid.domain.goods.dto.GoodsResponse;
+import com.onbid.domain.dto.Goods;
+import com.onbid.domain.dto.Response.GoodsResponse;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;

@@ -1,8 +1,8 @@
-package com.onbid.controller.purchase;
+package com.onbid.controller;
 
-import com.onbid.domain.purchase.entity.Purchase;
-import com.onbid.domain.purchase.dto.PurchaseRequest;
-import com.onbid.service.purchase.PurchaseService;
+import com.onbid.domain.entity.Purchase;
+import com.onbid.domain.dto.Request.PurchaseRequest;
+import com.onbid.service.PurchaseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
