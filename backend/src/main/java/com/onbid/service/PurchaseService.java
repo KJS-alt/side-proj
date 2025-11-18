@@ -1,14 +1,15 @@
 package com.onbid.service;
 
-import com.onbid.domain.entity.Purchase;
 import com.onbid.domain.dto.Request.PurchaseRequest;
+import com.onbid.domain.entity.Purchase;
+import com.onbid.exception.BusinessException;
+import com.onbid.exception.ErrorCode;
 import com.onbid.mapper.PurchaseMapper;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * 매매(구매) 서비스
@@ -32,11 +33,13 @@ public class PurchaseService {
                 request.getHistoryNo(), request.getPurchasePrice());
 
         if (request.getHistoryNo() == null || request.getPurchasePrice() == null) {
-            throw new IllegalArgumentException("historyNo와 purchasePrice는 필수입니다.");
+            // 필수 값이 비어 있으면 비즈니스 예외로 클라이언트에 안내
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "historyNo와 purchasePrice는 필수입니다.");
         }
 
         if (purchaseMapper.countByHistoryNo(request.getHistoryNo()) > 0) {
-            throw new IllegalStateException("이미 구매한 물건입니다.");
+            // 동일 물건 중복 구매를 방지하기 위해 명시적으로 실패 처리
+            throw new BusinessException(ErrorCode.DUPLICATED_PURCHASE, "이미 구매가 완료된 물건입니다.");
         }
         
         // Purchase 엔티티 생성

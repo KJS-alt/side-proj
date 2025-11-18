@@ -4,6 +4,9 @@ import com.onbid.domain.dto.Goods;
 import com.onbid.domain.entity.GoodsBasicEntity;
 import com.onbid.domain.entity.GoodsEntity;
 import com.onbid.domain.entity.GoodsPriceEntity;
+import com.onbid.exception.BusinessException;
+import com.onbid.exception.ErrorCode;
+import com.onbid.exception.GoodsNotFoundException;
 import com.onbid.mapper.GoodsMapper;
 import com.onbid.mapper.PurchaseMapper;
 import java.util.List;
@@ -40,7 +43,12 @@ public class GoodsService {
      */
     public GoodsEntity getGoodsByHistoryNo(Long historyNo) {
         log.info("물건이력번호로 물건 조회: {}", historyNo);
-        return goodsMapper.findByHistoryNo(historyNo);
+        GoodsEntity entity = goodsMapper.findByHistoryNo(historyNo);
+        if (entity == null) {
+            // 주어진 물건이력번호에 해당하는 데이터가 없음을 명시적으로 알림
+            throw new GoodsNotFoundException(historyNo);
+        }
+        return entity;
     }
     
     /**
@@ -53,7 +61,8 @@ public class GoodsService {
         log.info("=== 물건 데이터 동기화 시작 ===");
 
         if (goods == null || goods.isEmpty()) {
-            log.warn("저장할 물건이 없습니다.");
+            // 동기화할 데이터가 없으면 조용히 0건 처리로 반환
+            log.warn("저장할 물건 목록이 비어 있어 동기화를 건너뜁니다.");
             return 0;
         }
 
@@ -65,8 +74,8 @@ public class GoodsService {
             }
 
             try {
-                goodsMapper.upsertBasic(convertToBasicEntity(item));
-                goodsMapper.upsertPrice(convertToPriceEntity(item));
+                goodsMapper.insertOrUpdateBasic(convertToBasicEntity(item));
+                goodsMapper.insertOrUpdatePrice(convertToPriceEntity(item));
                 syncedCount++;
             } catch (Exception e) {
                 log.error("물건 동기화 실패 - historyNo: {}, 오류: {}",
@@ -94,7 +103,7 @@ public class GoodsService {
             return deletedBasic;
         } catch (Exception e) {
             log.error("물건 데이터 삭제 실패", e);
-            throw new RuntimeException("물건 데이터 삭제 실패: " + e.getMessage(), e);
+            throw new BusinessException(ErrorCode.DATABASE_ERROR, "물건 데이터 삭제 실패: " + e.getMessage());
         }
     }
 

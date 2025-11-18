@@ -17,8 +17,10 @@ public interface PurchaseMapper {
      * @param purchase 구매 정보
      * @return 등록된 행의 수
      */
-    @Insert("INSERT INTO purchases (history_no, purchase_price, purchase_status) " +
-            "VALUES (#{historyNo}, #{purchasePrice}, #{purchaseStatus})")
+    @Insert("""
+            INSERT INTO purchases (history_no, purchase_price, purchase_status)
+            VALUES (#{historyNo}, #{purchasePrice}, #{purchaseStatus})
+            """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Purchase purchase);
     
@@ -27,24 +29,23 @@ public interface PurchaseMapper {
      * @param historyNo 물건이력번호
      * @return 구매 이력 목록
      */
-    @Select("SELECT id, history_no, purchase_price, purchase_status, created_at " +
-            "FROM purchases WHERE history_no = #{historyNo} ORDER BY created_at DESC")
-    @Results(id = "purchaseResultMap", value = {
-            @Result(property = "id", column = "id", id = true),
-            @Result(property = "historyNo", column = "history_no"),
-            @Result(property = "purchasePrice", column = "purchase_price"),
-            @Result(property = "purchaseStatus", column = "purchase_status"),
-            @Result(property = "createdAt", column = "created_at")
-    })
+    @Select("""
+            SELECT id, history_no, purchase_price, purchase_status, created_at
+            FROM purchases
+            WHERE history_no = #{historyNo}
+            ORDER BY created_at DESC
+            """)
     List<Purchase> findByHistoryNo(Long historyNo);
     
     /**
      * 전체 구매 이력 조회
      * @return 구매 이력 목록
      */
-    @Select("SELECT id, history_no, purchase_price, purchase_status, created_at " +
-            "FROM purchases ORDER BY created_at DESC")
-    @ResultMap("purchaseResultMap")
+    @Select("""
+            SELECT id, history_no, purchase_price, purchase_status, created_at
+            FROM purchases
+            ORDER BY created_at DESC
+            """)
     List<Purchase> findAll();
 
     /**

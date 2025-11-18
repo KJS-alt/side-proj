@@ -40,9 +40,8 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // XML (JAXB) - OnBid API가 XML 응답 지원
-    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
-    implementation 'org.glassfish.jaxb:jaxb-runtime:4.0.2'
+    // XML → Jackson XmlMapper로 파싱
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 
     // Swagger (SpringDoc OpenAPI) - Spring Boot 3.5.x 호환 버전
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'

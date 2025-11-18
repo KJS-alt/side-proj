@@ -8,9 +8,6 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
-import org.apache.ibatis.annotations.Result;
-import org.apache.ibatis.annotations.ResultMap;
-import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 
 @Mapper
@@ -33,7 +30,7 @@ public interface GoodsMapper {
                 updated_at = CURRENT_TIMESTAMP
             """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    int upsertBasic(GoodsBasicEntity entity);
+    int insertOrUpdateBasic(GoodsBasicEntity entity);
 
     @Insert("""
             INSERT INTO goods_price
@@ -49,7 +46,7 @@ public interface GoodsMapper {
                 updated_at = CURRENT_TIMESTAMP
             """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    int upsertPrice(GoodsPriceEntity entity);
+    int insertOrUpdatePrice(GoodsPriceEntity entity);
 
     @Select("""
             SELECT
@@ -73,24 +70,6 @@ public interface GoodsMapper {
             LEFT JOIN goods_price gp ON gp.history_no = gb.history_no
             ORDER BY gb.created_at DESC
             """)
-    @Results(id = "goodsResultMap", value = {
-            @Result(property = "id", column = "id", id = true),
-            @Result(property = "historyNo", column = "history_no"),
-            @Result(property = "goodsName", column = "goods_name"),
-            @Result(property = "statusName", column = "status_name"),
-            @Result(property = "saleTypeName", column = "sale_type_name"),
-            @Result(property = "categoryName", column = "category_name"),
-            @Result(property = "bidStartDate", column = "bid_start_date"),
-            @Result(property = "bidCloseDate", column = "bid_close_date"),
-            @Result(property = "address", column = "address"),
-            @Result(property = "minBidPrice", column = "min_bid_price"),
-            @Result(property = "appraisalPrice", column = "appraisal_price"),
-            @Result(property = "feeRate", column = "fee_rate"),
-            @Result(property = "inquiryCount", column = "inquiry_count"),
-            @Result(property = "favoriteCount", column = "favorite_count"),
-            @Result(property = "createdAt", column = "created_at"),
-            @Result(property = "updatedAt", column = "updated_at")
-    })
     List<GoodsEntity> findAll();
 
     @Select("""
@@ -115,7 +94,6 @@ public interface GoodsMapper {
             LEFT JOIN goods_price gp ON gp.history_no = gb.history_no
             WHERE gb.history_no = #{historyNo}
             """)
-    @ResultMap("goodsResultMap")
     GoodsEntity findByHistoryNo(Long historyNo);
 
     @Select("SELECT COUNT(*) FROM goods_basic")
