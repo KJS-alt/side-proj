@@ -1,7 +1,7 @@
 package com.onbid.service;
 
 import com.onbid.domain.dto.Request.PurchaseRequest;
-import com.onbid.domain.entity.Purchase;
+import com.onbid.domain.entity.PurchaseEntity;
 import com.onbid.exception.BusinessException;
 import com.onbid.exception.ErrorCode;
 import com.onbid.mapper.PurchaseMapper;
@@ -28,7 +28,7 @@ public class PurchaseService {
      * @return 생성된 구매 정보
      */
     @Transactional
-    public Purchase createPurchase(PurchaseRequest request) {
+    public PurchaseEntity createPurchase(PurchaseRequest request) {
         log.info("구매 생성 - historyNo: {}, price: {}", 
                 request.getHistoryNo(), request.getPurchasePrice());
 
@@ -42,8 +42,8 @@ public class PurchaseService {
             throw new BusinessException(ErrorCode.DUPLICATED_PURCHASE, "이미 구매가 완료된 물건입니다.");
         }
         
-        // Purchase 엔티티 생성
-        Purchase purchase = Purchase.builder()
+        // PurchaseEntity 엔티티 생성
+        PurchaseEntity purchase = PurchaseEntity.builder()
                 .historyNo(request.getHistoryNo())
                 .purchasePrice(request.getPurchasePrice())
                 .purchaseStatus("COMPLETED")  // 기본값: 완료
@@ -61,7 +61,7 @@ public class PurchaseService {
      * @param historyNo 물건이력번호
      * @return 구매 이력 목록
      */
-    public List<Purchase> getPurchasesByHistoryNo(Long historyNo) {
+    public List<PurchaseEntity> getPurchasesByHistoryNo(Long historyNo) {
         log.info("구매 이력 조회 - historyNo: {}", historyNo);
         return purchaseMapper.findByHistoryNo(historyNo);
     }
@@ -70,7 +70,7 @@ public class PurchaseService {
      * 전체 구매 이력 조회
      * @return 구매 이력 목록
      */
-    public List<Purchase> getAllPurchases() {
+    public List<PurchaseEntity> getAllPurchases() {
         log.info("전체 구매 이력 조회");
         return purchaseMapper.findAll();
     }

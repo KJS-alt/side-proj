@@ -1,7 +1,6 @@
 package com.onbid.controller;
 
 import com.onbid.domain.dto.Goods;
-import com.onbid.domain.dto.Request.GoodsItemsRequest;
 import com.onbid.domain.dto.Request.GoodsSearchRequest;
 import com.onbid.domain.dto.Response.GoodsResponse;
 import com.onbid.domain.entity.GoodsEntity;
@@ -76,26 +75,6 @@ public class GoodsApiController {
         return ResponseEntity.ok(body);
     }
     
-    /**
-     * 물건 목록만 조회
-     */
-    @GetMapping("/items")
-    @Operation(summary = "물건 목록만 조회", description = "간단 목록을 DTO로 조회")
-    public ResponseEntity<Map<String, Object>> getGoodsItems(
-            @Valid @ParameterObject GoodsItemsRequest request) {
-        
-        List<Goods> items = onbidApiService.getGoodsItems(
-                request.getPageNo(),
-                request.getNumOfRows(),
-                request.getCtgrHirkId(),
-                request.getSido());
-        
-        Map<String, Object> body = new HashMap<>();
-        body.put("success", true); // 단순 목록 응답임을 알리기 위한 플래그
-        body.put("items", items);
-        body.put("count", items.size());
-        return ResponseEntity.ok(body);
-    }
     
     /**
      * DB에서 물건 목록 조회
@@ -161,7 +140,7 @@ public class GoodsApiController {
      * 동기화 상태 조회
      */
     @GetMapping("/refresh-status")
-    @Operation(summary = "동기화 상태 조회", description = "최근 동기화시각과 다음 동기화까지 남은 시간을 반환합니다")
+    @Operation(summary = "동기화 상태 조회", description = "최근 동기화시각을을 반환합니다")
     public ResponseEntity<Map<String, Object>> getRefreshStatus() {
         Map<String, Object> body = new HashMap<>();
         body.put("success", true); // 동기화 지표 응답도 동일 구조 사용

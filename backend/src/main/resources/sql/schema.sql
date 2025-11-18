@@ -16,8 +16,7 @@ CREATE TABLE goods_basic (
     address VARCHAR(1000) COMMENT '물건소재지',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '입력일시',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시',
-    INDEX idx_history_no (history_no),
-    INDEX idx_bid_close_date (bid_close_date)
+    INDEX idx_history_no (history_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='공매기본';
 
 -- 3. 공매 가격 정보
@@ -41,6 +40,5 @@ CREATE TABLE purchases (
     purchase_status VARCHAR(20) DEFAULT 'COMPLETED' COMMENT '구매상태 (PENDING, COMPLETED, CANCELLED)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '구매일시',
     FOREIGN KEY (history_no) REFERENCES goods_basic(history_no),
-    INDEX idx_history_no (history_no),
-    INDEX idx_purchase_status (purchase_status)
+    INDEX idx_history_no (history_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='매매';

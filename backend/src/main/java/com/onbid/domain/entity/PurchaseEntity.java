@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Purchase {
+public class PurchaseEntity {
     
     /**
      * 매매 ID (Primary Key)
@@ -45,4 +45,6 @@ public class Purchase {
      */
     private LocalDateTime createdAt;
 }
+
+
 

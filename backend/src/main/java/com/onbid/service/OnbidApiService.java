@@ -50,7 +50,7 @@ public class OnbidApiService {
     /**
      * 물건 목록 조회 (원시 XML 문자열 반환)
      */
-    public String getGoodsList(
+    public String fetchGoodsXml(
             int pageNo,
             int numOfRows,
             String ctgrHirkId,
@@ -126,8 +126,8 @@ public class OnbidApiService {
     /**
      * 간단한 물건 목록 조회
      */
-    public String getGoodsList(int pageNo, int numOfRows, String ctgrHirkId, String sido) {
-        return getGoodsList(pageNo, numOfRows, ctgrHirkId, sido,
+    public String fetchGoodsXml(int pageNo, int numOfRows, String ctgrHirkId, String sido) {
+        return fetchGoodsXml(pageNo, numOfRows, ctgrHirkId, sido,
                 null, null, null, null, null, null, null, null, null, null);
     }
     
@@ -148,7 +148,7 @@ public class OnbidApiService {
      * 물건 목록 조회 및 파싱
      */
     public GoodsResponse getGoodsListParsed(int pageNo, int numOfRows, String ctgrHirkId, String sido) {
-        String xml = getGoodsList(pageNo, numOfRows, ctgrHirkId, sido);
+        String xml = fetchGoodsXml(pageNo, numOfRows, ctgrHirkId, sido);
         return parseXmlToGoodsResponse(xml);
     }
     
@@ -160,14 +160,14 @@ public class OnbidApiService {
             String goodsPriceFrom, String goodsPriceTo, String openPriceFrom, String openPriceTo,
             String cltrNm, String pbctBegnDtm, String pbctClsDtm, String cltrMnmtNo) {
         
-        String xml = getGoodsList(pageNo, numOfRows, ctgrHirkId, sido, sgk, emd,
+        String xml = fetchGoodsXml(pageNo, numOfRows, ctgrHirkId, sido, sgk, emd,
                 goodsPriceFrom, goodsPriceTo, openPriceFrom, openPriceTo,
                 cltrNm, pbctBegnDtm, pbctClsDtm, cltrMnmtNo);
         return parseXmlToGoodsResponse(xml);
     }
     
     /**
-     * 물건 목록만 추출
+     * 최신 데이터 1000건 받기 (자동 갱신용)
      */
     public List<Goods> getGoodsItems(int pageNo, int numOfRows, String ctgrHirkId, String sido) {
         GoodsResponse response = getGoodsListParsed(pageNo, numOfRows, ctgrHirkId, sido);

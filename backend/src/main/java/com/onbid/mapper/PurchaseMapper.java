@@ -1,6 +1,6 @@
 package com.onbid.mapper;
 
-import com.onbid.domain.entity.Purchase;
+import com.onbid.domain.entity.PurchaseEntity;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public interface PurchaseMapper {
             VALUES (#{historyNo}, #{purchasePrice}, #{purchaseStatus})
             """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(Purchase purchase);
+    int insert(PurchaseEntity purchase);
     
     /**
      * 물건이력번호로 구매 이력 조회
@@ -35,7 +35,7 @@ public interface PurchaseMapper {
             WHERE history_no = #{historyNo}
             ORDER BY created_at DESC
             """)
-    List<Purchase> findByHistoryNo(Long historyNo);
+    List<PurchaseEntity> findByHistoryNo(Long historyNo);
     
     /**
      * 전체 구매 이력 조회
@@ -46,7 +46,7 @@ public interface PurchaseMapper {
             FROM purchases
             ORDER BY created_at DESC
             """)
-    List<Purchase> findAll();
+    List<PurchaseEntity> findAll();
 
     /**
      * 구매 데이터 초기화

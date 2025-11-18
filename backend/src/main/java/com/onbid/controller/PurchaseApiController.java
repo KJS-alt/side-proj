@@ -1,7 +1,7 @@
 package com.onbid.controller;
 
 import com.onbid.domain.dto.Request.PurchaseRequest;
-import com.onbid.domain.entity.Purchase;
+import com.onbid.domain.entity.PurchaseEntity;
 import com.onbid.service.PurchaseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -44,7 +44,7 @@ public class PurchaseApiController {
         log.info("구매 생성 API 호출 - historyNo: {}, price: {}",
                 request.getHistoryNo(), request.getPurchasePrice());
         
-        Purchase purchase = purchaseService.createPurchase(request);
+        PurchaseEntity purchase = purchaseService.createPurchase(request);
         Map<String, Object> body = new HashMap<>();
         body.put("success", true); // 구매 요청이 정상 완료되었음을 알리는 플래그
         body.put("purchase", purchase);
@@ -53,14 +53,14 @@ public class PurchaseApiController {
     }
     
     /**
-     * 특정 물건의 구매 이력 조회
+     * 특정 물건의 구매 이력 조회 (이미 구매했으면 상세 페이지에서 구매 불가능)
      */
     @GetMapping("/{historyNo}")
     @Operation(summary = "구매 이력 조회", description = "특정 물건의 구매 이력을 조회합니다")
     public ResponseEntity<Map<String, Object>> getPurchasesByHistoryNo(
             @PathVariable @Parameter(description = "물건이력번호") Long historyNo) {
         
-        List<Purchase> purchases = purchaseService.getPurchasesByHistoryNo(historyNo);
+        List<PurchaseEntity> purchases = purchaseService.getPurchasesByHistoryNo(historyNo);
         Map<String, Object> body = new HashMap<>();
         body.put("success", true); // 조회 성공 여부를 명시
         body.put("items", purchases);
@@ -74,7 +74,7 @@ public class PurchaseApiController {
     @GetMapping
     @Operation(summary = "전체 구매 이력 조회", description = "모든 구매 이력을 조회합니다")
     public ResponseEntity<Map<String, Object>> getAllPurchases() {
-        List<Purchase> purchases = purchaseService.getAllPurchases();
+        List<PurchaseEntity> purchases = purchaseService.getAllPurchases();
         Map<String, Object> body = new HashMap<>();
         body.put("success", true); // 전체 목록을 동일 구조로 반환
         body.put("items", purchases);

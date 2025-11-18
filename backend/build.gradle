@@ -43,7 +43,7 @@ dependencies {
     // XML → Jackson XmlMapper로 파싱
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 
-    // Swagger (SpringDoc OpenAPI) - Spring Boot 3.5.x 호환 버전
+    // Swagger (SpringDoc OpenAPI)
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
     // DevTools
